@@ -2,7 +2,7 @@
 
 A retro computing simulator featuring a Classic Mac OS-style windowed desktop environment with full CRT visual effects, barrel distortion, and interactive applications.
 
-**[Live Demo →](https://mrmcpowned.github.io/shellhacks-x/)**
+**[Live Demo →](https://mrmcpowned.github.io/shellos/)**
 
 ## Features
 
