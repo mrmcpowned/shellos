@@ -1,73 +1,109 @@
-# React + TypeScript + Vite
+# 🐚 ShellOS v1.0
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A retro computing simulator featuring a Classic Mac OS-style windowed desktop environment with full CRT visual effects, barrel distortion, and interactive applications.
 
-Currently, two official plugins are available:
+**[Live Demo →](https://mrmcpowned.github.io/shellhacks-x/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+### Desktop Environment
+- Classic Mac OS-style windowed UI with striped title bars, close boxes, and menu bar
+- Draggable and resizable windows via react-rnd
+- Window management: focus (z-order), minimize, active/inactive states
+- Desktop icons with double-click to open (single tap on mobile)
+- Click desktop to deactivate all windows
+- Persistent settings saved to localStorage
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Applications
+- **Terminal** — 17+ built-in commands including `dir`, `cat`, `cd`, `neofetch`, `cowsay`, `matrix`
+- **File Explorer** — Browse a real filesystem defined in `src/filesystem/` (bundled at build time via Vite `import.meta.glob`)
+- **Text Editor** — Open and edit text files from File Explorer or Terminal
+- **Snake** — Classic snake game with keyboard and touch controls
+- **Settings** — CRT intensity, terminal color, desktop pattern, sound, screensaver, quick boot toggle
+- **About ShellOS** — System info dialog with ASCII conch shell art
 
-## Expanding the ESLint configuration
+### CRT Effects
+- **Barrel distortion** — Real geometric distortion via SnapDOM capture → Three.js WebGL shader (bilinear sampling, perfectly smooth)
+- **Defocus bloom** — Warm phosphor glow from neighbor pixel sampling
+- **Scanlines** — Subtle brightness modulation
+- **Chromatic aberration** — Color fringing at screen edges
+- **Flicker** — Barely perceptible brightness oscillation
+- **Power-on animation** — Electric jolt: dot → line → full screen with brightness flash and static burst
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Performance
+- Variable refresh rate capture: 60fps during interaction, down to 2fps when idle
+- Animation-aware scheduling: higher capture rate when terminal or snake is open
+- Texture reuse to prevent GPU allocation churn
+- ResizeObserver for layout-thrash-free dimension tracking
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Boot Sequence
+- BIOS POST with ASCII conch shell art animation
+- CPU detection, memory count (640K), drive detection
+- Tone.js synthesized boot sounds (POST beep, memory clicks, drive seek, success chime)
+- "Press any key to skip" + configurable Quick Boot on return visits
+- Smooth shader-driven boot-to-desktop transition
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Additional Features
+- System error dialogs (💣 bomb icon, random crashes)
+- Screensaver (starfield or bouncing logo)
+- Shutdown sequence with confirmation dialog
+- UI sounds (window open/close, menu click, error beep, keystrokes)
+- Custom DOM cursor that follows barrel distortion
+- Mobile responsive layout
+- `prefers-reduced-motion` support
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Tech Stack
+
+| Technology | Purpose |
+|-----------|---------|
+| React 19 + TypeScript | UI framework |
+| Vite 8 | Build tool |
+| Three.js | WebGL barrel distortion + CRT shader |
+| @zumer/snapdom | DOM-to-canvas capture for WebGL pipeline |
+| react-rnd | Window drag and resize |
+| framer-motion | Boot text animations |
+| Tone.js | Audio synthesis (boot sounds, UI sounds) |
+| Space Mono | System UI font |
+| VT323 | Terminal font |
+
+## Filesystem
+
+The in-app filesystem is defined by real files in `src/filesystem/`. Add, edit, or remove files there — Vite bundles them at build time via `import.meta.glob`, no code changes needed.
+
+```
+src/filesystem/
+├── Applications/
+│   └── about.txt
+├── Documents/
+│   ├── readme.txt
+│   └── notes.txt
+└── System/
+    ├── config.sys
+    └── version.txt
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Install dependencies
+npm install
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Type check
+npx tsc -b
 ```
+
+> Requires Node.js 20.19+ or 22.12+
+
+## Deployment
+
+Deployed automatically to GitHub Pages via GitHub Actions on push to `main`.
+
+## License
+
+See [LICENSE](LICENSE).
