@@ -78,6 +78,19 @@ export default function Settings() {
       </div>
 
       <div className="settings-group">
+        <div className="settings-group-title">Boot</div>
+        <div className="settings-row">
+          <span>Quick Boot</span>
+          <div
+            className={`settings-toggle ${settings.quickBootEnabled ? 'on' : ''}`}
+            onClick={() => updateSettings({ quickBootEnabled: !settings.quickBootEnabled })}
+            role="switch"
+            aria-checked={settings.quickBootEnabled}
+          />
+        </div>
+      </div>
+
+      <div className="settings-group">
         <div className="settings-group-title">Screen Saver</div>
         <div className="settings-row">
           <span>Timeout</span>

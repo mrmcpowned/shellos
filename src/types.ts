@@ -60,6 +60,7 @@ export interface ShellOSSettings {
   terminalColor: 'green' | 'amber' | 'white';
   desktopPattern: 'crosshatch' | 'solid' | 'lines' | 'dots';
   soundEnabled: boolean;
+  quickBootEnabled: boolean;
   screensaverTimeout: number;
   screensaverMode: 'starfield' | 'bouncing';
 }

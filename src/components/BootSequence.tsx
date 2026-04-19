@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBootSound } from '../hooks/useBootSound';
+import { useShellOS } from '../contexts/ShellOSContext';
 import { SHELL_FRAME_1, SHELL_FRAME_2, SHELL_FRAME_3 } from '../assets/shellArt';
 
 interface BootSequenceProps {
@@ -35,7 +36,10 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   const [completed, setCompleted] = useState(false);
   const skipRef = useRef(false);
   const { playPostBeep, playMemoryTick, playDriveSeek, playBootChime } = useBootSound();
-  const quickBoot = useRef(localStorage.getItem('shellos-booted') === 'true');
+  const { settings } = useShellOS();
+  const quickBoot = useRef(
+    settings.quickBootEnabled && localStorage.getItem('shellos-booted') === 'true'
+  );
 
   const skipBoot = useCallback(() => {
     if (skipRef.current) return;
