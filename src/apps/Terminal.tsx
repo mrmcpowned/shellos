@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 import { useUISounds } from '../hooks/useUISounds';
 import { executeCommand } from './commands';
 

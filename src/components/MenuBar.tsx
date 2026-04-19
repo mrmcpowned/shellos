@@ -40,7 +40,8 @@ export default function MenuBar({
     setOpenMenu((prev) => (prev === name ? null : name));
   }, [playMenuClick]);
 
-  const handleAction = useCallback((action: () => void) => {
+  const handleAction = useCallback((action: () => void, e: React.MouseEvent) => {
+    e.stopPropagation();
     setOpenMenu(null);
     playMenuClick();
     action();
@@ -73,19 +74,19 @@ export default function MenuBar({
         🐚
         {openMenu === 'shell' && (
           <div className="menu-dropdown">
-            <div className="menu-dropdown-item" onClick={() => handleAction(onAbout)}>
+            <div className="menu-dropdown-item" onClick={(e) => handleAction(onAbout, e)}>
               About ShellOS
             </div>
             <div className="menu-dropdown-separator" />
-            <div className="menu-dropdown-item" onClick={() => handleAction(onSettings)}>
+            <div className="menu-dropdown-item" onClick={(e) => handleAction(onSettings, e)}>
               Settings...
             </div>
             <div className="menu-dropdown-separator" />
-            <div className="menu-dropdown-item" onClick={() => handleAction(onForceError)}>
+            <div className="menu-dropdown-item" onClick={(e) => handleAction(onForceError, e)}>
               Force Error
             </div>
             <div className="menu-dropdown-separator" />
-            <div className="menu-dropdown-item" onClick={() => handleAction(onShutdown)}>
+            <div className="menu-dropdown-item" onClick={(e) => handleAction(onShutdown, e)}>
               Shut Down...
             </div>
           </div>

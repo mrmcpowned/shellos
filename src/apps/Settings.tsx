@@ -1,6 +1,10 @@
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 
-export default function Settings() {
+interface SettingsProps {
+  onTryScreensaver?: () => void;
+}
+
+export default function Settings({ onTryScreensaver }: SettingsProps) {
   const { settings, updateSettings } = useShellOS();
 
   return (
@@ -117,6 +121,14 @@ export default function Settings() {
             <option value="bouncing">Bouncing Logo</option>
           </select>
         </div>
+        {onTryScreensaver && (
+          <div className="settings-row">
+            <span />
+            <button className="settings-button" onClick={onTryScreensaver}>
+              Try Screen Saver
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

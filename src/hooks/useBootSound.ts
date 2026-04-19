@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from './useShellOS';
 
 let audioContextStarted = false;
 

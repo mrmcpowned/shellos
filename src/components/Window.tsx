@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useEffect, useState, type ReactNode } fro
 import { Rnd } from 'react-rnd';
 import { motion } from 'framer-motion';
 import type { WindowState } from '../types';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 
 interface WindowProps {
   windowState: WindowState;

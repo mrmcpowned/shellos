@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface TextEditorProps {
   filePath?: string;
@@ -6,17 +6,23 @@ interface TextEditorProps {
 }
 
 export default function TextEditor({ filePath, initialContent }: TextEditorProps) {
-  const [content, setContent] = useState(initialContent || '');
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const handleInput = useCallback(() => {
+    // Content lives in the DOM via contentEditable — no state sync needed
+  }, []);
 
   return (
     <div className="text-editor">
-      <textarea
+      <div
+        ref={editorRef}
         className="text-editor-content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Start typing..."
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
         spellCheck={false}
         aria-label={filePath ? `Editing ${filePath}` : 'Text Editor'}
+        dangerouslySetInnerHTML={{ __html: (initialContent || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') }}
       />
     </div>
   );

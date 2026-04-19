@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 
 interface CRTScreenProps {
   children: ReactNode;

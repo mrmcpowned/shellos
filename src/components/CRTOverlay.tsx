@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
 import * as THREE from 'three';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 import type { Phase } from '../types';
 
 interface CRTOverlayProps {
@@ -184,7 +184,6 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   const domRef = useRef<HTMLDivElement>(null);
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
-  const transitionRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
 
@@ -196,6 +195,9 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   // Detect phase transitions that should replay the CRT power-on jolt
   const startTimeResetRef = useRef(false);
 
+  // Boot→Desktop transition: state-driven black overlay
+  const [bootTransition, setBootTransition] = useState<'idle' | 'black' | 'fading'>('idle');
+
   useEffect(() => {
     const prev = prevPhaseRef.current;
     const curr = phase;
@@ -204,20 +206,10 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       // PowerOn→Booting: CRT turns on with jolt
       startTimeResetRef.current = true;
     } else if (prev === 'booting' && curr === 'desktop') {
-      // Boot→Desktop: show black overlay above WebGL canvas,
-      // wait for desktop to render + snapdom to capture, then fade in.
-      if (transitionRef.current) {
-        const el = transitionRef.current;
-        el.style.opacity = '1';
-        el.style.display = 'block';
-        el.style.transition = 'none';
-        // After desktop content is captured, fade out the overlay
-        setTimeout(() => {
-          el.style.transition = 'opacity 0.5s ease-out';
-          el.style.opacity = '0';
-          setTimeout(() => { el.style.display = 'none'; }, 500);
-        }, 400);
-      }
+      // Boot→Desktop: show black, wait for content capture, then fade out
+      setBootTransition('black');
+      setTimeout(() => setBootTransition('fading'), 400);
+      setTimeout(() => setBootTransition('idle'), 900);
     } else if (prev === 'screensaver' && curr === 'desktop') {
       // Screensaver exit: jolt (screen wakes up)
       startTimeResetRef.current = true;
@@ -247,6 +239,45 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
     }
   }, [phase]);
 
+  // Detect cursor type by walking up the DOM tree, checking semantic cues
+  const detectCursor = useCallback((el: Element | null): string => {
+    let node: Element | null = el;
+    while (node && node !== document.documentElement) {
+      // Check inline style cursor
+      const inlineCursor = (node as HTMLElement).style?.cursor;
+      if (inlineCursor && inlineCursor !== 'none') {
+        if (inlineCursor === 'text') return 'text';
+        if (inlineCursor === 'pointer') return 'pointer';
+        if (inlineCursor === 'grab' || inlineCursor === 'grabbing') return 'grab';
+        if (inlineCursor === 'not-allowed') return 'not-allowed';
+        if (inlineCursor.includes('resize')) return inlineCursor;
+        if (inlineCursor === 'move') return 'grab';
+      }
+      // Check tag name
+      const tag = node.tagName;
+      if (tag === 'TEXTAREA' || (node as HTMLElement).isContentEditable) return 'text';
+      if (tag === 'INPUT') {
+        const type = (node as HTMLInputElement).type;
+        return (type === 'range' || type === 'checkbox' || type === 'radio' || type === 'button' || type === 'submit') ? 'pointer' : 'text';
+      }
+      if (tag === 'BUTTON' || tag === 'A' || tag === 'SELECT') return 'pointer';
+      // Check ARIA roles
+      const role = node.getAttribute('role');
+      if (role === 'button' || role === 'switch' || role === 'link' || role === 'tab' || role === 'menuitem') return 'pointer';
+      // Check for known clickable CSS classes (cursor:pointer in stylesheet)
+      if (node.classList) {
+        const cl = node.classList;
+        if (cl.contains('menu-item') || cl.contains('menu-dropdown-item') ||
+            cl.contains('desktop-icon') || cl.contains('settings-toggle') ||
+            cl.contains('settings-color-swatch') || cl.contains('settings-button') ||
+            cl.contains('window-close-box') || cl.contains('screensaver')) return 'pointer';
+        if (cl.contains('window-title-bar')) return 'grab';
+      }
+      node = node.parentElement;
+    }
+    return 'default';
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     lastActivityRef.current = performance.now();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -262,8 +293,11 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       }
       cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
       cursorRef.current.style.display = 'block';
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      cursorRef.current.dataset.cursor = detectCursor(el);
     }
-  }, []);
+  }, [detectCursor]);
 
   const handleMouseLeave = useCallback(() => {
     if (cursorRef.current) {
@@ -518,8 +552,9 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   }, [enabled]);
 
   if (!enabled) {
+    const isDesktop = phase === 'desktop' || phase === 'screensaver' || phase === 'shutdown';
     return (
-      <div className="crt-wrapper">
+      <div className="crt-wrapper" style={isDesktop ? { background: 'var(--color-desktop-bg, #a8a8a8)' } : undefined}>
         {children}
       </div>
     );
@@ -566,20 +601,11 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       />
 
       {/* Transition overlay — above WebGL for fade-to/from-black */}
-      <div
-        ref={transitionRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'black',
-          zIndex: 3,
-          pointerEvents: 'none',
-          display: 'none',
-        }}
-      />
+      {bootTransition !== 'idle' && (
+        <div
+          className={`crt-boot-transition ${bootTransition}`}
+        />
+      )}
     </div>
   );
 }

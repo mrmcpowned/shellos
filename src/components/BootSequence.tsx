@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBootSound } from '../hooks/useBootSound';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 import { SHELL_FRAME_1, SHELL_FRAME_2, SHELL_FRAME_3 } from '../assets/shellArt';
 
 interface BootSequenceProps {

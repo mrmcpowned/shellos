@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useState, type ReactNode } from 'react';
 import type { ShellOSSettings } from '../types';
 
+const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
 const defaultSettings: ShellOSSettings = {
-  crtEnabled: true,
+  crtEnabled: !isMobile,
   crtIntensity: 0.6,
   terminalColor: 'green',
   desktopPattern: 'crosshatch',
@@ -21,6 +23,8 @@ const ShellOSContext = createContext<ShellOSContextValue>({
   settings: defaultSettings,
   updateSettings: () => {},
 });
+
+export { ShellOSContext };
 
 const STORAGE_KEY = 'shellos-settings';
 
@@ -60,8 +64,4 @@ export function ShellOSProvider({ children }: { children: ReactNode }) {
       {children}
     </ShellOSContext.Provider>
   );
-}
-
-export function useShellOS() {
-  return useContext(ShellOSContext);
 }

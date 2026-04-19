@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useShellOS } from '../contexts/ShellOSContext';
+import { useShellOS } from '../hooks/useShellOS';
 
 interface ScreenSaverProps {
   onDismiss: () => void;
@@ -17,11 +17,16 @@ export default function ScreenSaver({ onDismiss }: ScreenSaverProps) {
 
   useEffect(() => {
     const handleInput = () => dismiss();
-    document.addEventListener('mousemove', handleInput);
-    document.addEventListener('keydown', handleInput);
-    document.addEventListener('click', handleInput);
-    document.addEventListener('touchstart', handleInput);
+    // Delay registering listeners to avoid the triggering click/mousemove
+    // from immediately dismissing the screensaver
+    const timer = setTimeout(() => {
+      document.addEventListener('mousemove', handleInput);
+      document.addEventListener('keydown', handleInput);
+      document.addEventListener('click', handleInput);
+      document.addEventListener('touchstart', handleInput);
+    }, 500);
     return () => {
+      clearTimeout(timer);
       document.removeEventListener('mousemove', handleInput);
       document.removeEventListener('keydown', handleInput);
       document.removeEventListener('click', handleInput);

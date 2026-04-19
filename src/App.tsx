@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import './styles/shellos.css';
-import { ShellOSProvider, useShellOS } from './contexts/ShellOSContext';
+import { ShellOSProvider } from './contexts/ShellOSContext';
+import { useShellOS } from './hooks/useShellOS';
 import { useWindowManager } from './hooks/useWindowManager';
 import { useIdleTimer } from './hooks/useIdleTimer';
 import { useUISounds } from './hooks/useUISounds';
@@ -109,7 +110,7 @@ function ShellOSApp() {
       case 'about':
         return <AboutShellOS onClose={() => handleCloseWindow(win.id)} />;
       case 'settings':
-        return <Settings />;
+        return <Settings onTryScreensaver={screensaverOn} />;
       case 'snake':
         return <Snake isActive={isActive} />;
       default:
@@ -204,8 +205,8 @@ function ShellOSApp() {
       {/* Screen Saver */}
       {state.phase === 'screensaver' && <ScreenSaver onDismiss={screensaverOff} />}
 
-      {/* Fade-from-black overlay for boot→desktop transition */}
-      {bootFade && (
+      {/* Fade-from-black overlay for boot→desktop transition (non-CRT only) */}
+      {bootFade && !settings.crtEnabled && (
         <div className="boot-fade-overlay" />
       )}
     </CRTOverlay>
