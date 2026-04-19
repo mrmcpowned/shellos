@@ -62,7 +62,8 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           setCompleted(true);
           localStorage.setItem('shellos-booted', 'true');
           playBootChime();
-          setTimeout(onComplete, 1200);
+          // Wait 2.5s after boot complete, then transition (shader handles the fade)
+          setTimeout(onComplete, 2500);
         }
         return;
       }
@@ -141,7 +142,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   }, [skipBoot]);
 
   return (
-    <div className="boot-screen crt-power-on">
+    <div className="boot-screen">
       {shellFrame && (
         <motion.pre
           initial={{ opacity: 0 }}

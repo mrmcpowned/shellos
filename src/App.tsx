@@ -117,7 +117,7 @@ function ShellOSApp() {
   };
 
   return (
-    <CRTOverlay>
+    <CRTOverlay phase={state.phase}>
       {/* Boot Sequence */}
       {state.phase === 'booting' && <BootSequence onComplete={bootComplete} />}
 
