@@ -170,6 +170,12 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   const [webglOk] = useState(hasWebGL);
   const enabled = settings.crtEnabled && webglOk;
 
+  // Use ref so changes don't restart the capture/render effect
+  const hasAnimatedContentRef = useRef(hasAnimatedContent);
+  useEffect(() => {
+    hasAnimatedContentRef.current = hasAnimatedContent;
+  }, [hasAnimatedContent]);
+
   const domRef = useRef<HTMLDivElement>(null);
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -239,11 +245,21 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   const intensity = reducedMotion ? settings.crtIntensity * 0.3 : settings.crtIntensity;
+  const intensityRef = useRef(intensity);
+  useEffect(() => {
+    intensityRef.current = intensity;
+  }, [intensity]);
 
   // Initialize Three.js scene
   const initGL = useCallback(() => {
     const canvas = glCanvasRef.current;
-    if (!canvas || rendererRef.current) return;
+    if (!canvas) return;
+
+    // Dispose old renderer if re-initializing
+    if (rendererRef.current) {
+      rendererRef.current.dispose();
+      rendererRef.current = null;
+    }
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
     renderer.setPixelRatio(1);
@@ -272,7 +288,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
         uTexture: { value: texture },
         uTime: { value: 0 },
         uStartTime: { value: -1 },
-        uIntensity: { value: intensity },
+        uIntensity: { value: intensityRef.current },
         uFade: { value: 1.0 },
         uResolution: { value: new THREE.Vector2(1920, 1080) },
       },
@@ -282,7 +298,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
     const geometry = new THREE.PlaneGeometry(2, 2);
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
-  }, [intensity]);
+  }, []);
 
   // Decoupled capture + render loops for performance:
   // - Capture: runs snapdom at ~10fps (throttled), only when DOM has likely changed
@@ -320,7 +336,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       const idleMs = performance.now() - lastActivityRef.current;
       if (idleMs < 200) return 16;                     // ~60fps — actively interacting
       if (idleMs < 1000) return 33;                    // ~30fps — recently active
-      if (hasAnimatedContent) return 50;               // ~20fps — snake/terminal animating
+      if (hasAnimatedContentRef.current) return 50;   // ~20fps — snake/terminal animating
       if (idleMs < 5000) return 200;                   // ~5fps — static windows, idle
       return 500;                                       // ~2fps — empty desktop, minimal CPU
     }
@@ -329,6 +345,10 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       if (!snapdomRef.current) {
         const mod = await import('@zumer/snapdom');
         snapdomRef.current = mod.snapdom;
+        // Pre-cache fonts so first capture doesn't stall
+        if (domRef.current && mod.preCache) {
+          await mod.preCache(domRef.current, { embedFonts: true });
+        }
       }
     }
 
@@ -344,7 +364,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       try {
         const capturedCanvas = await snapdomRef.current.toCanvas(domRef.current, {
           scale: 1,
-          embedFonts: false,
+          embedFonts: true,
           fast: true,
           cache: 'auto',
         });
@@ -391,7 +411,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
         if (material.uniforms.uStartTime.value < 0) {
           material.uniforms.uStartTime.value = now;
         }
-        material.uniforms.uIntensity.value = intensity;
+        material.uniforms.uIntensity.value = intensityRef.current;
         material.uniforms.uResolution.value.set(w, h);
 
         // Smooth fade interpolation (~60fps lerp)
@@ -418,22 +438,32 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       cancelAnimationFrame(rafRef.current);
       resizeObserver.disconnect();
     };
-  }, [enabled, intensity, phase, hasAnimatedContent, initGL]);
+  }, [enabled, phase, initGL]);
 
-  // Cleanup renderer on unmount
+  // Cleanup renderer when disabled or unmounted
   useEffect(() => {
+    if (!enabled) {
+      rendererRef.current?.dispose();
+      rendererRef.current = null;
+      materialRef.current?.dispose();
+      materialRef.current = null;
+      textureRef.current?.dispose();
+      textureRef.current = null;
+    }
     return () => {
       rendererRef.current?.dispose();
       rendererRef.current = null;
       materialRef.current?.dispose();
+      materialRef.current = null;
       textureRef.current?.dispose();
+      textureRef.current = null;
     };
-  }, []);
+  }, [enabled]);
 
   if (!enabled) {
     return (
       <div className="crt-wrapper">
-        <div className="crt-screen-glow">{children}</div>
+        {children}
       </div>
     );
   }

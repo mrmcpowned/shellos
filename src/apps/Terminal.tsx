@@ -27,7 +27,6 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
   const [cwd, setCwd] = useState('/');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [showMatrix, setShowMatrix] = useState(false);
   const outputRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
@@ -67,13 +66,67 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
       if (result.clear) {
         setOutput([]);
       } else if (result.matrix) {
-        setShowMatrix(true);
-        setTimeout(() => setShowMatrix(false), 3000);
-        setOutput((prev) => [
-          ...prev,
-          { id: lineIdCounter++, text: prompt },
-          { id: lineIdCounter++, text: result.output },
-        ]);
+        // Matrix rain: simulate cmatrix by clearing screen and rendering
+        // full "frames" where each column has a falling head character
+        // with a trail of random chars behind it
+        setOutput([{ id: lineIdCounter++, text: result.output }]);
+
+        const cols = 50;
+        const rows = 20;
+        // Each column: current head position (row index), speed (rows per tick)
+        const columns: { pos: number; speed: number; chars: string[] }[] =
+          Array.from({ length: cols }, () => ({
+            pos: -Math.floor(Math.random() * rows),
+            speed: 1 + Math.floor(Math.random() * 2),
+            chars: Array.from({ length: rows }, () =>
+              String.fromCharCode(0x30a0 + Math.random() * 96)
+            ),
+          }));
+
+        let ticks = 0;
+        const matrixInterval = setInterval(() => {
+          // Build a frame: each row is a string of characters
+          const frame: string[] = [];
+          for (let r = 0; r < rows; r++) {
+            let row = '';
+            for (let c = 0; c < cols; c++) {
+              const col = columns[c];
+              const dist = col.pos - r;
+              if (dist >= 0 && dist < 6) {
+                // In the trail — show a character
+                row += col.chars[r % col.chars.length];
+              } else {
+                row += ' ';
+              }
+            }
+            frame.push(row);
+          }
+
+          // Advance each column
+          for (const col of columns) {
+            col.pos += col.speed;
+            if (col.pos > rows + 8) {
+              col.pos = -Math.floor(Math.random() * 6);
+              col.speed = 1 + Math.floor(Math.random() * 2);
+              // Randomize chars for next pass
+              for (let i = 0; i < col.chars.length; i++) {
+                col.chars[i] = String.fromCharCode(0x30a0 + Math.random() * 96);
+              }
+            }
+          }
+
+          // Replace output with the frame
+          setOutput([{ id: lineIdCounter++, text: frame.join('\n') }]);
+          ticks++;
+
+          if (ticks >= 60) {
+            clearInterval(matrixInterval);
+            setOutput((prev) => [
+              ...prev,
+              { id: lineIdCounter++, text: '\n[Matrix disconnected]\n' },
+            ]);
+          }
+        }, 80);
       } else {
         setOutput((prev) => [
           ...prev,
@@ -161,7 +214,6 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
 
   return (
     <div className="terminal" data-color={settings.terminalColor} ref={outputRef}>
-      {showMatrix && <MatrixRain />}
       <div className="terminal-output">
         {output.map((line) => (
           <div key={line.id}>{line.text}</div>
@@ -186,34 +238,6 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
           spellCheck={false}
         />
       </form>
-    </div>
-  );
-}
-
-function MatrixRain() {
-  const columns = Math.floor(window.innerWidth / 16);
-  return (
-    <div className="matrix-rain">
-      {Array.from({ length: columns }, (_, i) => {
-        const chars = Array.from({ length: 20 }, () =>
-          String.fromCharCode(0x30a0 + Math.random() * 96)
-        ).join('\n');
-        const delay = Math.random() * 2;
-        const duration = 1 + Math.random() * 2;
-        return (
-          <div
-            key={i}
-            className="matrix-column"
-            style={{
-              left: `${i * 16}px`,
-              animationDelay: `${delay}s`,
-              animationDuration: `${duration}s`,
-            }}
-          >
-            {chars}
-          </div>
-        );
-      })}
     </div>
   );
 }

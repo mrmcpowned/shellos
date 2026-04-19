@@ -166,10 +166,17 @@
 .desktop-area {
   position: absolute;
   top: 28px; /* below menu bar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* Inset padding when CRT enabled to avoid barrel distortion edge bleeding */
+.desktop-area[data-crt] {
   left: 20px;
   right: 20px;
   bottom: 20px;
-  overflow: hidden;
 }
 
 /* ----- Menu Bar ----- */
@@ -381,6 +388,44 @@
   flex: 1;
   overflow: auto;
   position: relative;
+  min-height: 0;
+}
+
+/* Hide native scrollbar when CRT is on — custom overlay replaces it */
+.window-body-crt::-webkit-scrollbar {
+  display: none;
+}
+.window-body-crt {
+  scrollbar-width: none;
+}
+
+/* Custom scrollbar overlay — positioned relative to window-chrome,
+   offset below the title bar. Sibling to content, not inside scroll container. */
+.window-scrollbar {
+  position: absolute;
+  top: 26px; /* below title bar */
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  pointer-events: none;
+  z-index: 20;
+}
+.window-scrollbar-track {
+  width: 16px;
+  height: 100%;
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  position: relative;
+}
+.window-scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #c0c0c0;
+  border: 1px outset #ffffff;
+  border-right-color: #808080;
+  border-bottom-color: #808080;
+  min-height: 24px;
 }
 
 /* ----- Terminal App ----- */

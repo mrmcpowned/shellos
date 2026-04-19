@@ -136,7 +136,7 @@ function ShellOSApp() {
             onShutdown={handleShutdown}
             onForceError={handleForceError}
           />
-          <div className="desktop-area" onClick={(e) => {
+          <div className="desktop-area" data-crt={settings.crtEnabled || undefined} onClick={(e) => {
             // Click on empty desktop area deactivates all windows
             if (e.target === e.currentTarget) deactivateAll();
           }}>
