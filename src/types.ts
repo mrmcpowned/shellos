@@ -14,7 +14,7 @@ export interface WindowState {
   data?: Record<string, unknown>;
 }
 
-export type Phase = 'booting' | 'desktop' | 'shutdown' | 'screensaver';
+export type Phase = 'poweron' | 'booting' | 'desktop' | 'shutdown' | 'screensaver';
 
 export interface ErrorState {
   message: string;
@@ -31,6 +31,7 @@ export interface DesktopState {
 }
 
 export type DesktopAction =
+  | { type: 'POWER_ON' }
   | { type: 'BOOT_COMPLETE' }
   | { type: 'OPEN_WINDOW'; appType: AppType; title: string; data?: Record<string, unknown> }
   | { type: 'CLOSE_WINDOW'; id: string }
@@ -40,6 +41,7 @@ export type DesktopAction =
   | { type: 'MINIMIZE_WINDOW'; id: string }
   | { type: 'MAXIMIZE_WINDOW'; id: string }
   | { type: 'SHUTDOWN' }
+  | { type: 'CANCEL_SHUTDOWN' }
   | { type: 'SCREENSAVER_ON' }
   | { type: 'SCREENSAVER_OFF' }
   | { type: 'SHOW_ERROR'; error: ErrorState }

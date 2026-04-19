@@ -48,55 +48,61 @@ export default function Window({
 
   const { settings } = useShellOS();
   const crtOn = settings.crtEnabled;
-  const bodyElRef = useRef<HTMLDivElement | null>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
   const [scrollState, setScrollState] = useState({ visible: false, thumbTop: 0, thumbHeight: 30 });
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  // Callback ref — fires when the DOM element is attached/detached
   const bodyRef = useCallback((el: HTMLDivElement | null) => {
-    // Clean up previous listeners
+    // Clean up previous
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = null;
     }
-    bodyElRef.current = el;
 
-    if (!el || !crtOn) return;
+    if (!el || !crtOn) {
+      setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30 });
+      return;
+    }
 
     const update = () => {
-      const { scrollTop, scrollHeight, clientHeight } = el;
+      // Check body first, then known scrollable children
+      let target: HTMLElement = el;
+      if (el.scrollHeight <= el.clientHeight + 1) {
+        const child = el.querySelector('.terminal, .file-explorer, .settings-panel, .text-editor-content') as HTMLElement | null;
+        if (child && child.scrollHeight > child.clientHeight + 1) {
+          target = child;
+        }
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = target;
       const visible = scrollHeight > clientHeight + 1;
       if (!visible) {
         setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30 });
         return;
       }
-      const trackHeight = clientHeight;
-      const thumbHeight = Math.max(24, (clientHeight / scrollHeight) * trackHeight);
+      const thumbHeight = Math.max(24, (clientHeight / scrollHeight) * clientHeight);
       const scrollRange = scrollHeight - clientHeight;
-      const thumbRange = trackHeight - thumbHeight;
+      const thumbRange = clientHeight - thumbHeight;
       const thumbTop = scrollRange > 0 ? (scrollTop / scrollRange) * thumbRange : 0;
       setScrollState({ visible: true, thumbTop, thumbHeight });
     };
 
-    el.addEventListener('scroll', update, { passive: true });
+    el.addEventListener('scroll', update, { passive: true, capture: true });
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    const mo = new MutationObserver(update);
+    // Watch for content changes (new terminal output, etc.)
+    const mo = new MutationObserver(() => requestAnimationFrame(update));
     mo.observe(el, { childList: true, subtree: true, characterData: true });
     update();
 
     cleanupRef.current = () => {
-      el.removeEventListener('scroll', update);
+      el.removeEventListener('scroll', update, { capture: true });
       ro.disconnect();
       mo.disconnect();
     };
   }, [crtOn]);
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (cleanupRef.current) cleanupRef.current();
-    };
+    return () => { if (cleanupRef.current) cleanupRef.current(); };
   }, []);
 
   const content = useMemo(
@@ -133,7 +139,6 @@ export default function Window({
     [windowState.title, isActive, onClose, onFocus, children, crtOn, bodyRef]
   );
 
-  // Scrollbar rendered outside useMemo so scroll updates don't re-render entire window
   const scrollbar = crtOn && scrollState.visible ? (
     <div className="window-scrollbar">
       <div className="window-scrollbar-track">
@@ -148,10 +153,7 @@ export default function Window({
   if (isMobile || windowState.minimized) {
     if (windowState.minimized) return null;
     return (
-      <div
-        className="window-chrome"
-        style={{ zIndex: windowState.zIndex }}
-      >
+      <div className="window-chrome" style={{ zIndex: windowState.zIndex }}>
         {content}
         {scrollbar}
       </div>

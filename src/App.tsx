@@ -1,10 +1,11 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './styles/shellos.css';
 import { ShellOSProvider, useShellOS } from './contexts/ShellOSContext';
 import { useWindowManager } from './hooks/useWindowManager';
 import { useIdleTimer } from './hooks/useIdleTimer';
 import { useUISounds } from './hooks/useUISounds';
 import CRTOverlay from './components/CRTOverlay';
+import PowerOnScreen from './components/PowerOnScreen';
 import BootSequence from './components/BootSequence';
 import MenuBar from './components/MenuBar';
 import DesktopIcon from './components/DesktopIcon';
@@ -31,7 +32,7 @@ function ShellOSApp() {
   const { settings } = useShellOS();
   const {
     state, openWindow, closeWindow, focusWindow, moveWindow, resizeWindow,
-    bootComplete, shutdown, screensaverOn, screensaverOff, showError, dismissError, deactivateAll, restart,
+    powerOn, bootComplete, shutdown, cancelShutdown, screensaverOn, screensaverOff, showError, dismissError, deactivateAll, restart,
   } = useWindowManager();
   const { playWindowOpen, playWindowClose } = useUISounds();
   const isIdle = useIdleTimer(settings.screensaverTimeout);
@@ -121,13 +122,32 @@ function ShellOSApp() {
     (w) => !w.minimized && (w.appType === 'snake' || w.appType === 'terminal')
   );
 
+  // Fade-from-black overlay when transitioning boot→desktop
+  const [bootFade, setBootFade] = useState(false);
+  useEffect(() => {
+    if (state.phase === 'desktop' && bootFade) {
+      // After fade animation completes, remove the overlay
+      const timer = setTimeout(() => setBootFade(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [state.phase, bootFade]);
+
+  // Intercept boot complete to trigger fade
+  const handleBootComplete = useCallback(() => {
+    setBootFade(true);
+    bootComplete();
+  }, [bootComplete]);
+
   return (
     <CRTOverlay phase={state.phase} hasAnimatedContent={hasAnimatedContent}>
+      {/* Power On splash */}
+      {state.phase === 'poweron' && <PowerOnScreen onPowerOn={powerOn} />}
+
       {/* Boot Sequence */}
-      {state.phase === 'booting' && <BootSequence onComplete={bootComplete} />}
+      {state.phase === 'booting' && <BootSequence onComplete={handleBootComplete} />}
 
       {/* Desktop */}
-      {(state.phase === 'desktop' || state.phase === 'screensaver') && (
+      {(state.phase === 'desktop' || state.phase === 'screensaver' || state.phase === 'shutdown') && (
         <div className="desktop" data-pattern={desktopPattern}>
           <MenuBar
             activeAppName={activeAppTitle}
@@ -175,14 +195,19 @@ function ShellOSApp() {
               onContinue={dismissError}
             />
           )}
+
+          {/* Shutdown Modal (rendered over desktop like crash dialog) */}
+          {state.phase === 'shutdown' && <ShutdownScreen onRestart={restart} onCancel={cancelShutdown} />}
         </div>
       )}
 
       {/* Screen Saver */}
       {state.phase === 'screensaver' && <ScreenSaver onDismiss={screensaverOff} />}
 
-      {/* Shutdown */}
-      {state.phase === 'shutdown' && <ShutdownScreen onRestart={restart} />}
+      {/* Fade-from-black overlay for boot→desktop transition */}
+      {bootFade && (
+        <div className="boot-fade-overlay" />
+      )}
     </CRTOverlay>
   );
 }

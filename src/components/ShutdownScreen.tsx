@@ -2,22 +2,18 @@ import { useState, useCallback, useEffect } from 'react';
 
 interface ShutdownScreenProps {
   onRestart: () => void;
+  onCancel?: () => void;
 }
 
 type ShutdownPhase = 'confirm' | 'shutting-down' | 'safe' | 'off';
 
-export default function ShutdownScreen({ onRestart }: ShutdownScreenProps) {
+export default function ShutdownScreen({ onRestart, onCancel }: ShutdownScreenProps) {
   const [phase, setPhase] = useState<ShutdownPhase>('confirm');
 
   const handleShutdown = useCallback(() => {
     setPhase('shutting-down');
     setTimeout(() => setPhase('safe'), 1500);
     setTimeout(() => setPhase('off'), 4000);
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    // This won't actually go back since the parent controls phase
-    // The parent should handle this, but we show confirm as default
   }, []);
 
   useEffect(() => {
@@ -32,16 +28,21 @@ export default function ShutdownScreen({ onRestart }: ShutdownScreenProps) {
     }
   }, [phase, onRestart]);
 
+  // Confirm dialog — same overlay style as SystemError
   if (phase === 'confirm') {
     return (
-      <div className="shutdown-confirm-overlay">
-        <div className="shutdown-confirm-dialog">
-          <div style={{ marginBottom: '8px', fontSize: '28px' }}>🐚</div>
-          <div>Are you sure you want to shut down?</div>
-          <div className="shutdown-confirm-buttons">
-            <button className="system-error-btn" onClick={handleCancel}>
-              Cancel
-            </button>
+      <div className="system-error-overlay">
+        <div className="system-error-dialog">
+          <div className="system-error-icon">🐚</div>
+          <div className="system-error-message">
+            Are you sure you want to shut down?
+          </div>
+          <div className="system-error-buttons">
+            {onCancel && (
+              <button className="system-error-btn" onClick={onCancel}>
+                Cancel
+              </button>
+            )}
             <button className="system-error-btn" onClick={handleShutdown}>
               Shut Down
             </button>
@@ -51,29 +52,22 @@ export default function ShutdownScreen({ onRestart }: ShutdownScreenProps) {
     );
   }
 
-  if (phase === 'shutting-down') {
-    return (
-      <div className="shutdown-screen">
-        <div>Shutting down ShellOS...</div>
-      </div>
-    );
-  }
-
-  if (phase === 'safe') {
-    return (
-      <div className="shutdown-screen">
-        <div>
-          It is now safe to turn off<br />your computer.
-        </div>
-      </div>
-    );
-  }
-
-  // phase === 'off'
+  // Shutting down / safe / off — full screen overlay
   return (
-    <div className="shutdown-screen crt-power-off" style={{ background: '#000' }}>
-      <div style={{ opacity: 0.5, fontSize: '10px' }}>
-        Click anywhere or press any key to restart
+    <div className="system-error-overlay" style={{ background: 'rgba(0,0,0,0.85)' }}>
+      <div className="system-error-dialog" style={{ border: 'none', boxShadow: 'none', background: 'transparent', color: '#fff' }}>
+        <div className="system-error-icon">🐚</div>
+        <div className="system-error-message" style={{ color: '#fff' }}>
+          {phase === 'shutting-down' && 'Shutting down ShellOS...'}
+          {phase === 'safe' && (
+            <>It is now safe to turn off<br />your computer.</>
+          )}
+          {phase === 'off' && (
+            <span style={{ opacity: 0.5, fontSize: '11px' }}>
+              Click anywhere to restart
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

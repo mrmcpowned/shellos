@@ -15,7 +15,7 @@ const DEFAULT_SIZES: Record<AppType, { width: number; height: number }> = {
 const SINGLETONS: AppType[] = ['about', 'settings'];
 
 const initialState: DesktopState = {
-  phase: 'booting',
+  phase: 'poweron',
   windows: [],
   nextZIndex: 10,
   activeWindowId: null,
@@ -24,6 +24,9 @@ const initialState: DesktopState = {
 
 function reducer(state: DesktopState, action: DesktopAction): DesktopState {
   switch (action.type) {
+    case 'POWER_ON':
+      return { ...state, phase: 'booting' };
+
     case 'BOOT_COMPLETE':
       return { ...state, phase: 'desktop' };
 
@@ -125,6 +128,9 @@ function reducer(state: DesktopState, action: DesktopAction): DesktopState {
     case 'SHUTDOWN':
       return { ...state, phase: 'shutdown' };
 
+    case 'CANCEL_SHUTDOWN':
+      return state.phase === 'shutdown' ? { ...state, phase: 'desktop' } : state;
+
     case 'SCREENSAVER_ON':
       return state.phase === 'desktop' ? { ...state, phase: 'screensaver' } : state;
 
@@ -169,8 +175,10 @@ export function useWindowManager() {
   );
   const minimizeWindow = useCallback((id: string) => dispatch({ type: 'MINIMIZE_WINDOW', id }), []);
   const maximizeWindow = useCallback((id: string) => dispatch({ type: 'MAXIMIZE_WINDOW', id }), []);
+  const powerOn = useCallback(() => dispatch({ type: 'POWER_ON' }), []);
   const bootComplete = useCallback(() => dispatch({ type: 'BOOT_COMPLETE' }), []);
   const shutdown = useCallback(() => dispatch({ type: 'SHUTDOWN' }), []);
+  const cancelShutdown = useCallback(() => dispatch({ type: 'CANCEL_SHUTDOWN' }), []);
   const screensaverOn = useCallback(() => dispatch({ type: 'SCREENSAVER_ON' }), []);
   const screensaverOff = useCallback(() => dispatch({ type: 'SCREENSAVER_OFF' }), []);
   const showError = useCallback(
@@ -190,8 +198,10 @@ export function useWindowManager() {
     resizeWindow,
     minimizeWindow,
     maximizeWindow,
+    powerOn,
     bootComplete,
     shutdown,
+    cancelShutdown,
     screensaverOn,
     screensaverOff,
     showError,

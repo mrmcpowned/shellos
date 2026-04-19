@@ -170,15 +170,21 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   const [webglOk] = useState(hasWebGL);
   const enabled = settings.crtEnabled && webglOk;
 
-  // Use ref so changes don't restart the capture/render effect
+  // Use refs so changes don't restart the capture/render effect
   const hasAnimatedContentRef = useRef(hasAnimatedContent);
   useEffect(() => {
     hasAnimatedContentRef.current = hasAnimatedContent;
   }, [hasAnimatedContent]);
 
+  const phaseRef = useRef(phase);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
   const domRef = useRef<HTMLDivElement>(null);
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const transitionRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
 
@@ -187,29 +193,73 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
   const fadeCurrentRef = useRef(1.0);
   const prevPhaseRef = useRef(phase);
 
-  // Detect boot→desktop transition: smooth dim and recover
+  // Detect phase transitions that should replay the CRT power-on jolt
+  const startTimeResetRef = useRef(false);
+
   useEffect(() => {
-    if (prevPhaseRef.current === 'booting' && phase === 'desktop') {
-      fadeCurrentRef.current = 0.4;
-      fadeTargetRef.current = 1.0;
+    const prev = prevPhaseRef.current;
+    const curr = phase;
+
+    if (prev === 'poweron' && curr === 'booting') {
+      // PowerOn→Booting: CRT turns on with jolt
+      startTimeResetRef.current = true;
+    } else if (prev === 'booting' && curr === 'desktop') {
+      // Boot→Desktop: show black overlay above WebGL canvas,
+      // wait for desktop to render + snapdom to capture, then fade in.
+      if (transitionRef.current) {
+        const el = transitionRef.current;
+        el.style.opacity = '1';
+        el.style.display = 'block';
+        el.style.transition = 'none';
+        // After desktop content is captured, fade out the overlay
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.5s ease-out';
+          el.style.opacity = '0';
+          setTimeout(() => { el.style.display = 'none'; }, 500);
+        }, 400);
+      }
+    } else if (prev === 'screensaver' && curr === 'desktop') {
+      // Screensaver exit: jolt (screen wakes up)
+      startTimeResetRef.current = true;
+    } else if (prev === 'desktop' && curr === 'screensaver') {
+      // Screensaver enter: jolt
+      startTimeResetRef.current = true;
     }
+
     prevPhaseRef.current = phase;
   }, [phase]);
 
   // Custom cursor: track mouse and position the cursor div
   const lastActivityRef = useRef(0);
+  const lastMousePosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize activity timestamp after mount
   useEffect(() => {
     lastActivityRef.current = performance.now();
   }, []);
 
+  // Show cursor at last known position when phase transitions to desktop
+  useEffect(() => {
+    const p = phase;
+    if ((p === 'desktop' || p === 'screensaver' || p === 'shutdown') && cursorRef.current && lastMousePosRef.current) {
+      cursorRef.current.style.transform = `translate(${lastMousePosRef.current.x}px, ${lastMousePosRef.current.y}px)`;
+      cursorRef.current.style.display = 'block';
+    }
+  }, [phase]);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     lastActivityRef.current = performance.now();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    lastMousePosRef.current = { x, y };
     if (cursorRef.current) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // Only show custom cursor on desktop/screensaver phases
+      const p = phaseRef.current;
+      if (p !== 'desktop' && p !== 'screensaver' && p !== 'shutdown') {
+        cursorRef.current.style.display = 'none';
+        return;
+      }
       cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
       cursorRef.current.style.display = 'block';
     }
@@ -331,8 +381,8 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
     // Variable refresh: animation-aware scheduling
     // Priority: boot/screensaver > user input > animated windows > static windows > idle
     function getCaptureInterval() {
-      if (phase === 'booting') return 16;              // ~60fps — boot animation
-      if (phase === 'screensaver') return 33;          // ~30fps — screensaver animation
+      if (phaseRef.current === 'booting') return 16;              // ~60fps — boot animation
+      if (phaseRef.current === 'screensaver') return 33;          // ~30fps — screensaver animation
       const idleMs = performance.now() - lastActivityRef.current;
       if (idleMs < 200) return 16;                     // ~60fps — actively interacting
       if (idleMs < 1000) return 33;                    // ~30fps — recently active
@@ -407,15 +457,22 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
 
         const now = performance.now() / 1000;
         material.uniforms.uTime.value = now;
-        // Set start time on first frame
-        if (material.uniforms.uStartTime.value < 0) {
+        // Set start time on first frame, or reset for power-on jolt replay.
+        // During poweron phase, set start time far in the past so the jolt
+        // animation is already "complete" and content renders normally.
+        if (startTimeResetRef.current) {
           material.uniforms.uStartTime.value = now;
+          startTimeResetRef.current = false;
+        } else if (material.uniforms.uStartTime.value < 0) {
+          material.uniforms.uStartTime.value = phaseRef.current === 'poweron' ? now - 10.0 : now;
         }
         material.uniforms.uIntensity.value = intensityRef.current;
         material.uniforms.uResolution.value.set(w, h);
 
         // Smooth fade interpolation (~60fps lerp)
-        const fadeSpeed = 0.02; // slow smooth recovery
+        // Faster when fading in from black, slower for subtle adjustments
+        const fadeGap = Math.abs(fadeTargetRef.current - fadeCurrentRef.current);
+        const fadeSpeed = fadeGap > 0.5 ? 0.06 : 0.02;
         fadeCurrentRef.current += (fadeTargetRef.current - fadeCurrentRef.current) * fadeSpeed;
         material.uniforms.uFade.value = fadeCurrentRef.current;
 
@@ -438,7 +495,7 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       cancelAnimationFrame(rafRef.current);
       resizeObserver.disconnect();
     };
-  }, [enabled, phase, initGL]);
+  }, [enabled, initGL]);
 
   // Cleanup renderer when disabled or unmounted
   useEffect(() => {
@@ -468,9 +525,11 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
     );
   }
 
+  const showCustomCursor = phase === 'desktop' || phase === 'screensaver' || phase === 'shutdown';
+
   return (
     <div
-      className="crt-wrapper crt-cursor-hidden"
+      className={`crt-wrapper${showCustomCursor ? ' crt-cursor-hidden' : ''}`}
       style={{ position: 'relative' }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -503,6 +562,22 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
           left: 0,
           zIndex: 2,
           pointerEvents: 'none',
+        }}
+      />
+
+      {/* Transition overlay — above WebGL for fade-to/from-black */}
+      <div
+        ref={transitionRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'black',
+          zIndex: 3,
+          pointerEvents: 'none',
+          display: 'none',
         }}
       />
     </div>

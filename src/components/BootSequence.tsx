@@ -17,7 +17,7 @@ interface BootLine {
 const BOOT_LINES: BootLine[] = [
   { text: 'ShellOS BIOS v1.0 — Conch Computing Inc.', delay: 300 },
   { text: '(c) 2026 Conch Computing Inc. All Rights Reserved\n', delay: 200 },
-  { text: '', delay: 100, action: 'shell1' },
+  { text: '', delay: 500, action: 'shell1' },
   { text: '', delay: 600, action: 'shell2' },
   { text: '', delay: 600, action: 'shell3' },
   { text: '\nDetecting CPU... 6502 @ 1MHz — OK', delay: 400 },

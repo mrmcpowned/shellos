@@ -84,6 +84,42 @@
   .crt-power-off { animation: none; }
 }
 
+/* ----- Power On Screen ----- */
+.poweron-screen {
+  width: 100%;
+  height: 100dvh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+.poweron-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.poweron-icon {
+  font-size: 64px;
+  color: #444;
+  transition: color 0.3s, text-shadow 0.3s;
+}
+.poweron-screen:hover .poweron-icon {
+  color: #4f4;
+  text-shadow: 0 0 20px rgba(68, 255, 68, 0.5);
+}
+.poweron-text {
+  font-family: var(--font-system);
+  font-size: 14px;
+  color: #555;
+  transition: color 0.3s;
+}
+.poweron-screen:hover .poweron-text {
+  color: #888;
+}
+
 /* ----- Boot Sequence ----- */
 .boot-screen {
   width: 100%;
@@ -130,6 +166,24 @@
 .boot-fade-out {
   opacity: 0;
   transition: opacity 0.8s ease-in;
+}
+
+/* Fade-from-black overlay for boot→desktop transition */
+.boot-fade-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 9999;
+  pointer-events: none;
+  animation: bootFadeIn 0.6s ease-out forwards;
+}
+
+@keyframes bootFadeIn {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ----- Desktop ----- */
@@ -391,19 +445,21 @@
   min-height: 0;
 }
 
-/* Hide native scrollbar when CRT is on — custom overlay replaces it */
-.window-body-crt::-webkit-scrollbar {
+/* When CRT is on: hide native scrollbars everywhere inside the window body.
+   The custom DOM scrollbar overlay replaces them. */
+.window-body-crt::-webkit-scrollbar,
+.window-body-crt *::-webkit-scrollbar {
   display: none;
 }
-.window-body-crt {
+.window-body-crt,
+.window-body-crt * {
   scrollbar-width: none;
 }
 
-/* Custom scrollbar overlay — positioned relative to window-chrome,
-   offset below the title bar. Sibling to content, not inside scroll container. */
+/* Custom scrollbar overlay — positioned relative to window-chrome */
 .window-scrollbar {
   position: absolute;
-  top: 26px; /* below title bar */
+  top: 26px;
   right: 0;
   bottom: 0;
   width: 16px;
