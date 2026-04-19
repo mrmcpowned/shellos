@@ -175,6 +175,7 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
 
   const domRef = useRef<HTMLDivElement>(null);
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
 
@@ -186,12 +187,29 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
   // Detect boot→desktop transition: smooth dim and recover
   useEffect(() => {
     if (prevPhaseRef.current === 'booting' && phase === 'desktop') {
-      // Dim to 40% then smoothly fade back — the lerp in render loop handles the smoothing
       fadeCurrentRef.current = 0.4;
       fadeTargetRef.current = 1.0;
     }
     prevPhaseRef.current = phase;
   }, [phase]);
+
+  // Custom cursor: track mouse and position the cursor div
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (cursorRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
+      cursorRef.current.style.display = 'block';
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (cursorRef.current) {
+      cursorRef.current.style.display = 'none';
+    }
+  }, []);
+
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const textureRef = useRef<THREE.Texture | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
@@ -381,10 +399,13 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
   }
 
   return (
-    <div className="crt-wrapper" style={{ position: 'relative' }}>
-      {/* DOM layer — underneath the canvas. Users click through the canvas
-           (pointer-events:none) to interact with the DOM. The canvas fully
-           occludes it visually (alpha:false = opaque WebGL context). */}
+    <div
+      className="crt-wrapper crt-cursor-hidden"
+      style={{ position: 'relative' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* DOM layer — interactive underneath */}
       <div
         ref={domRef}
         style={{
@@ -398,9 +419,12 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
         }}
       >
         {children}
+        {/* Custom cursor — lives in the DOM so snapdom captures it,
+            barrel distortion warps it with everything else */}
+        <div ref={cursorRef} className="crt-custom-cursor" style={{ display: 'none' }} />
       </div>
 
-      {/* WebGL layer — fades in over 600ms to seamlessly take over from DOM */}
+      {/* WebGL layer — barrel distorted capture */}
       <canvas
         ref={glCanvasRef}
         style={{

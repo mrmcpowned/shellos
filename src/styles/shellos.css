@@ -8,6 +8,29 @@
   overflow: hidden;
 }
 
+/* Hide system cursor when CRT is active */
+.crt-cursor-hidden,
+.crt-cursor-hidden * {
+  cursor: none !important;
+}
+
+/* Custom retro Mac cursor rendered in DOM (captured by snapdom → barrel distorted) */
+.crt-custom-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 22px;
+  pointer-events: none;
+  z-index: 9999;
+  image-rendering: pixelated;
+  /* Classic Mac arrow as inline SVG data URI */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='16' viewBox='0 0 11 16'%3E%3Cpath d='M0 0L0 16L3 12L5.5 16.5L7.5 15.5L5 11L9 11Z' fill='white' stroke='black' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  will-change: transform;
+}
+
 /* The actual screen surface */
 .crt-screen-glow {
   width: 100%;
