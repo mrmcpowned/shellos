@@ -30,6 +30,19 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
   const [showMatrix, setShowMatrix] = useState(false);
   const outputRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
+  const cursorRef = useRef<HTMLSpanElement>(null);
+
+  // JS-driven cursor blink — CSS animations don't survive snapdom cloning
+  useEffect(() => {
+    const el = cursorRef.current;
+    if (!el) return;
+    let visible = true;
+    const id = setInterval(() => {
+      visible = !visible;
+      el.style.opacity = visible ? '1' : '0';
+    }, 530);
+    return () => clearInterval(id);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     if (outputRef.current) {
@@ -158,7 +171,7 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
         <span className="terminal-prompt">{cwd}&gt;&nbsp;</span>
         <span className="terminal-input">
           {input}
-          <span className="terminal-cursor" />
+          <span ref={cursorRef} className="terminal-cursor" />
         </span>
       </div>
       <form className="terminal-mobile-input" onSubmit={handleMobileSubmit}>

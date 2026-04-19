@@ -433,13 +433,10 @@
   width: 0.6em;
   height: 1.1em;
   background: currentColor;
-  animation: cursor-blink 1s step-end infinite;
   vertical-align: text-bottom;
-}
-
-@keyframes cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+  /* Blink handled by JS (setInterval toggling style.opacity)
+     so snapdom captures the actual state — CSS animations don't
+     transfer to snapdom's cloned DOM */
 }
 
 .terminal-mobile-input {

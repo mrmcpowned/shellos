@@ -116,8 +116,13 @@ function ShellOSApp() {
     }
   };
 
+  // Determine if any open window has animated content (affects CRT capture rate)
+  const hasAnimatedContent = state.windows.some(
+    (w) => !w.minimized && (w.appType === 'snake' || w.appType === 'terminal')
+  );
+
   return (
-    <CRTOverlay phase={state.phase}>
+    <CRTOverlay phase={state.phase} hasAnimatedContent={hasAnimatedContent}>
       {/* Boot Sequence */}
       {state.phase === 'booting' && <BootSequence onComplete={bootComplete} />}
 

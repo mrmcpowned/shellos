@@ -184,7 +184,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
       )}
       {!completed && (
         <div className="boot-skip">
-          {quickBoot.current ? 'Quick Boot...' : 'Press any key to skip'}
+          {completed ? '' : 'Press any key to skip'}
         </div>
       )}
     </div>

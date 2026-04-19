@@ -6,6 +6,7 @@ import type { Phase } from '../types';
 interface CRTOverlayProps {
   children: ReactNode;
   phase: Phase;
+  hasAnimatedContent: boolean;
 }
 
 /**
@@ -114,18 +115,14 @@ const fragmentShader = `
     // --- Base color with bilinear sampling (smooth!) ---
     vec4 color = texture2D(uTexture, uv);
 
-    // --- Defocus bloom ---
+    // --- Defocus bloom (4-tap cross for performance) ---
     float bloomR = 1.5 * i;
     vec4 bloom = vec4(0.0);
-    bloom += texture2D(uTexture, uv + vec2(-texel.x, -texel.y) * bloomR);
     bloom += texture2D(uTexture, uv + vec2( 0.0,     -texel.y) * bloomR);
-    bloom += texture2D(uTexture, uv + vec2( texel.x, -texel.y) * bloomR);
     bloom += texture2D(uTexture, uv + vec2(-texel.x,  0.0)     * bloomR);
     bloom += texture2D(uTexture, uv + vec2( texel.x,  0.0)     * bloomR);
-    bloom += texture2D(uTexture, uv + vec2(-texel.x,  texel.y) * bloomR);
     bloom += texture2D(uTexture, uv + vec2( 0.0,      texel.y) * bloomR);
-    bloom += texture2D(uTexture, uv + vec2( texel.x,  texel.y) * bloomR);
-    bloom /= 8.0;
+    bloom /= 4.0;
     color = mix(color, bloom, 0.15 * i);
 
     // --- Chromatic aberration ---
@@ -168,7 +165,7 @@ function hasWebGL(): boolean {
   }
 }
 
-export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
+export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTOverlayProps) {
   const { settings } = useShellOS();
   const [webglOk] = useState(hasWebGL);
   const enabled = settings.crtEnabled && webglOk;
@@ -194,7 +191,15 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
   }, [phase]);
 
   // Custom cursor: track mouse and position the cursor div
+  const lastActivityRef = useRef(0);
+
+  // Initialize activity timestamp after mount
+  useEffect(() => {
+    lastActivityRef.current = performance.now();
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    lastActivityRef.current = performance.now();
     if (cursorRef.current) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -209,6 +214,20 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
       cursorRef.current.style.display = 'none';
     }
   }, []);
+
+  // Track keyboard activity too
+  useEffect(() => {
+    if (!enabled) return;
+    const handler = () => { lastActivityRef.current = performance.now(); };
+    document.addEventListener('keydown', handler);
+    document.addEventListener('click', handler);
+    document.addEventListener('scroll', handler, true);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.removeEventListener('click', handler);
+      document.removeEventListener('scroll', handler, true);
+    };
+  }, [enabled]);
 
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const textureRef = useRef<THREE.Texture | null>(null);
@@ -274,9 +293,37 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
 
     let running = true;
     let capturing = false;
-    const captureInterval = phase === 'booting' ? 32 : 50;
     let lastCaptureTime = 0;
-    let captureReady = true;
+    const captureReady = true;
+    let cachedW = 0;
+    let cachedH = 0;
+
+    // Cache dimensions via ResizeObserver — no layout thrashing
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        cachedW = entry.contentRect.width;
+        cachedH = entry.contentRect.height;
+      }
+    });
+    if (domRef.current) {
+      const dom = domRef.current;
+      cachedW = dom.offsetWidth;
+      cachedH = dom.offsetHeight;
+      resizeObserver.observe(dom);
+    }
+
+    // Variable refresh: animation-aware scheduling
+    // Priority: boot/screensaver > user input > animated windows > static windows > idle
+    function getCaptureInterval() {
+      if (phase === 'booting') return 16;              // ~60fps — boot animation
+      if (phase === 'screensaver') return 33;          // ~30fps — screensaver animation
+      const idleMs = performance.now() - lastActivityRef.current;
+      if (idleMs < 200) return 16;                     // ~60fps — actively interacting
+      if (idleMs < 1000) return 33;                    // ~30fps — recently active
+      if (hasAnimatedContent) return 50;               // ~20fps — snake/terminal animating
+      if (idleMs < 5000) return 200;                   // ~5fps — static windows, idle
+      return 500;                                       // ~2fps — empty desktop, minimal CPU
+    }
 
     async function loadSnapdom() {
       if (!snapdomRef.current) {
@@ -289,7 +336,7 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
     async function capture() {
       if (!running || capturing || !captureReady || !domRef.current || !snapdomRef.current) return;
       const now = performance.now();
-      if (now - lastCaptureTime < captureInterval) return;
+      if (now - lastCaptureTime < getCaptureInterval()) return;
 
       capturing = true;
       lastCaptureTime = now;
@@ -299,23 +346,15 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
           scale: 1,
           embedFonts: false,
           fast: true,
-          cache: 'full',
+          cache: 'auto',
         });
 
-        // Create a fresh texture from the capture each time — avoids stale size issues
-        const material = materialRef.current;
-        if (material) {
-          const oldTex = textureRef.current;
-          if (oldTex) oldTex.dispose();
-
-          const newTex = new THREE.CanvasTexture(capturedCanvas);
-          newTex.minFilter = THREE.LinearFilter;
-          newTex.magFilter = THREE.LinearFilter;
-          newTex.generateMipmaps = false;
-          newTex.wrapS = THREE.ClampToEdgeWrapping;
-          newTex.wrapT = THREE.ClampToEdgeWrapping;
-          textureRef.current = newTex;
-          material.uniforms.uTexture.value = newTex;
+        // Reuse existing texture — just update the image source.
+        // Avoids GPU alloc/dealloc churn that causes compounding delay.
+        const tex = textureRef.current;
+        if (tex) {
+          tex.image = capturedCanvas;
+          tex.needsUpdate = true;
         }
       } catch {
         // Skip failed capture
@@ -335,12 +374,12 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
       const dom = domRef.current;
 
       if (renderer && material && scene && camera && dom) {
-        const w = dom.offsetWidth;
-        const h = dom.offsetHeight;
+        // Use cached dimensions — updated by ResizeObserver, not layout-thrashing reads
+        const w = cachedW;
+        const h = cachedH;
 
-        // Update canvas size to match DOM — critical on window resize
         const canvas = renderer.domElement;
-        if (canvas.width !== w || canvas.height !== h) {
+        if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
           renderer.setSize(w, h, false);
           canvas.style.width = w + 'px';
           canvas.style.height = h + 'px';
@@ -377,8 +416,9 @@ export default function CRTOverlay({ children, phase }: CRTOverlayProps) {
     return () => {
       running = false;
       cancelAnimationFrame(rafRef.current);
+      resizeObserver.disconnect();
     };
-  }, [enabled, intensity, phase, initGL]);
+  }, [enabled, intensity, phase, hasAnimatedContent, initGL]);
 
   // Cleanup renderer on unmount
   useEffect(() => {
