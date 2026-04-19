@@ -1,0 +1,7 @@
+ShellOS v1.0
+A Retro Computing Simulator
+
+Developed by Conch Computing Inc.
+Powered by the spirit of classic computing.
+
+"The shell that never closes."

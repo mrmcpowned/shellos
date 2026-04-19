@@ -1,0 +1,9 @@
+ShellOS Notes
+=============
+
+TODO:
+  - Organize files
+  - Try the Snake game
+  - Customize desktop pattern in Settings
+
+Remember: 640K ought to be enough for anybody!

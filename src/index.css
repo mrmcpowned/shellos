@@ -1,0 +1,66 @@
+@import '@fontsource/vt323/400.css';
+@import '@fontsource/press-start-2p/400.css';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --font-system: 'Space Mono', 'Monaco', 'Courier New', ui-monospace, monospace;
+  --font-pixel: 'Press Start 2P', 'Monaco', 'Courier New', monospace;
+  --font-terminal: 'VT323', 'Courier New', ui-monospace, monospace;
+  --color-green: #33ff33;
+  --color-amber: #ffb000;
+  --color-white: #e0e0e0;
+  --color-crt-bg: #0a0a0a;
+  --color-desktop-bg: #a8a8a8;
+  --color-menu-bg: #ffffff;
+  --color-window-bg: #ffffff;
+  --color-window-inactive: #cccccc;
+  --color-title-stripe: #000080;
+  --color-border: #000000;
+  --color-highlight: #000080;
+  --color-highlight-text: #ffffff;
+}
+
+html, body {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--font-system);
+  font-size: 13px;
+  -webkit-font-smoothing: auto;
+}
+
+#root {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+::selection {
+  background: var(--color-highlight);
+  color: var(--color-highlight-text);
+}
+
+::-webkit-scrollbar {
+  width: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 1px outset #ffffff;
+  border-right-color: #808080;
+  border-bottom-color: #808080;
+}

@@ -1,0 +1,893 @@
+/* ===== ShellOS Styles ===== */
+
+/* ----- CRT Overlay & Effects ----- */
+.crt-wrapper {
+  width: 100%;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  /* The outer bezel frame */
+  padding: 6px;
+  border-radius: 20px;
+}
+
+/* The actual screen surface — curved CRT glass */
+.crt-screen-glow {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  /* Inset shadow = bright center, dark edges = convex surface lighting */
+  box-shadow:
+    inset 0 0 100px 30px rgba(0,0,0,0.4),
+    inset 0 0 20px 8px rgba(0,0,0,0.25);
+}
+
+/* Glass highlight reflection — diagonal bright streak like light on curved glass */
+.crt-screen-glow::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(
+      ellipse at 30% 20%,
+      rgba(255,255,255,0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 70% 80%,
+      rgba(255,255,255,0.03) 0%,
+      transparent 40%
+    );
+  pointer-events: none;
+  z-index: 9998;
+  border-radius: 16px;
+}
+
+/* Outer bezel glow */
+.crt-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 20px;
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.08),
+    inset 0 -2px 4px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.crt-canvas-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100dvh !important;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ----- Per-element CRT glow (used on terminal/boot for extra phosphor effect) ----- */
+.crt-screen-glow {
+  width: 100%;
+  height: 100%;
+}
+
+/* Power on/off */
+.crt-power-on {
+  animation: power-on 0.6s ease-out forwards;
+}
+@keyframes power-on {
+  0% { transform: scaleY(0.005) scaleX(0.8); filter: brightness(10); }
+  30% { transform: scaleY(0.005) scaleX(1); }
+  50% { transform: scaleY(1) scaleX(1); filter: brightness(2); }
+  100% { transform: scaleY(1) scaleX(1); filter: brightness(1); }
+}
+
+.crt-power-off {
+  animation: power-off 0.5s ease-in forwards;
+}
+@keyframes power-off {
+  0% { transform: scaleY(1) scaleX(1); filter: brightness(1); }
+  40% { transform: scaleY(0.005) scaleX(1); filter: brightness(10); }
+  70% { transform: scaleY(0.005) scaleX(0.3); }
+  100% { transform: scaleY(0) scaleX(0); filter: brightness(0); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .crt-heavy::after { animation: none; }
+  .crt-power-on { animation: none; }
+  .crt-power-off { animation: none; }
+}
+
+/* ----- Boot Sequence ----- */
+.boot-screen {
+  width: 100%;
+  height: 100dvh;
+  background: var(--color-crt-bg);
+  color: var(--color-green);
+  font-family: var(--font-terminal);
+  font-size: clamp(18px, 2.5vw, 24px);
+  padding: clamp(16px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  text-shadow: 0 0 6px currentColor;
+}
+
+.boot-screen pre {
+  font-family: var(--font-terminal);
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.2;
+  white-space: pre;
+  margin: 0;
+}
+
+.boot-line {
+  margin: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.boot-skip {
+  position: absolute;
+  bottom: clamp(8px, 2vw, 20px);
+  right: clamp(8px, 2vw, 20px);
+  font-size: clamp(14px, 1.5vw, 18px);
+  opacity: 0.5;
+  font-family: var(--font-terminal);
+}
+
+.boot-memory-counter {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Desktop ----- */
+.desktop {
+  width: 100%;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  /* Classic Mac crosshatch pattern */
+  background-color: var(--color-desktop-bg);
+  background-image:
+    linear-gradient(45deg, #999 25%, transparent 25%),
+    linear-gradient(-45deg, #999 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #999 75%),
+    linear-gradient(-45deg, transparent 75%, #999 75%);
+  background-size: 4px 4px;
+  background-position: 0 0, 0 2px, 2px -2px, -2px 0;
+}
+
+.desktop[data-pattern="solid"] {
+  background-image: none;
+}
+.desktop[data-pattern="lines"] {
+  background-image: repeating-linear-gradient(
+    0deg, #999 0px, #999 1px, transparent 1px, transparent 3px
+  );
+  background-size: auto;
+}
+.desktop[data-pattern="dots"] {
+  background-image: radial-gradient(circle, #999 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+
+.desktop-area {
+  position: absolute;
+  top: 28px; /* below menu bar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* ----- Menu Bar ----- */
+.menu-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: var(--color-menu-bg);
+  border-bottom: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  z-index: 1000;
+  font-size: 14px;
+  font-family: var(--font-system);
+  line-height: 28px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.menu-item {
+  padding: 0 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+}
+.menu-item:hover,
+.menu-item.active {
+  background: var(--color-highlight);
+  color: var(--color-highlight-text);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-menu-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  min-width: 180px;
+  z-index: 1001;
+  color: #000;
+}
+.menu-dropdown-item {
+  padding: 6px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+  font-family: var(--font-system);
+}
+.menu-dropdown-item:hover {
+  background: var(--color-highlight);
+  color: var(--color-highlight-text);
+}
+.menu-dropdown-separator {
+  border-top: 1px solid #808080;
+  margin: 2px 0;
+}
+
+.menu-clock {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  padding: 0 8px;
+}
+
+.menu-active-app {
+  font-weight: bold;
+  padding: 0 12px;
+  font-family: var(--font-system);
+}
+
+/* ----- Desktop Icons ----- */
+.desktop-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  position: absolute;
+  top: 0;
+  right: 12px;
+}
+
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 2px;
+  width: 90px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.desktop-icon:focus-visible {
+  outline: 2px dotted var(--color-border);
+}
+.desktop-icon.selected {
+  background: var(--color-highlight);
+  color: var(--color-highlight-text);
+}
+.desktop-icon-emoji {
+  font-size: 40px;
+  line-height: 1;
+  font-family: system-ui, sans-serif;
+}
+.desktop-icon-label {
+  font-size: 12px;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.3;
+  font-family: var(--font-system);
+  color: #000;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* ----- Window Chrome ----- */
+.window-chrome {
+  position: absolute;
+  border: 1px solid var(--color-border);
+  background: var(--color-window-bg);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  min-height: 200px;
+}
+
+.window-title-bar {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  flex-shrink: 0;
+  /* Active: solid blue with horizontal line texture */
+  background: linear-gradient(
+    0deg,
+    #000088 0px, #000088 1px,
+    #0000cc 1px, #0000cc 2px,
+    #000088 2px, #000088 3px,
+    #4444ee 3px, #4444ee 4px
+  );
+  background-size: 100% 4px;
+}
+.window-title-bar:active {
+  cursor: grabbing;
+}
+.window-title-bar.inactive {
+  background: linear-gradient(
+    0deg,
+    #999 0px, #999 1px,
+    #bbb 1px, #bbb 2px,
+    #999 2px, #999 3px,
+    #ccc 3px, #ccc 4px
+  );
+  background-size: 100% 4px;
+}
+
+.window-close-box {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  z-index: 1;
+  margin-right: 4px;
+}
+.window-close-box:hover {
+  background: #ff0000;
+  color: #fff;
+}
+
+.window-title-text {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: var(--font-system);
+  color: #fff;
+  /* Solid pill background behind text for readability over stripes */
+  background: #000088;
+  padding: 1px 12px;
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+}
+.window-title-bar.inactive .window-title-text {
+  color: #666;
+  background: #aaa;
+}
+
+.window-body {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* ----- Terminal App ----- */
+.terminal {
+  width: 100%;
+  height: 100%;
+  background: var(--color-crt-bg);
+  color: var(--color-green);
+  font-family: var(--font-terminal);
+  font-size: clamp(18px, 2.2vw, 24px);
+  padding: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  text-shadow: 0 0 5px currentColor;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal[data-color="amber"] {
+  color: var(--color-amber);
+}
+.terminal[data-color="white"] {
+  color: var(--color-white);
+  text-shadow: 0 0 4px currentColor;
+}
+
+.terminal-output {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: flex-start;
+}
+.terminal-prompt {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.terminal-input {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+  outline: none;
+  min-height: 1.2em;
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: currentColor;
+  animation: cursor-blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.terminal-mobile-input {
+  display: none;
+}
+
+/* ----- File Explorer ----- */
+.file-explorer {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  font-family: var(--font-system);
+  font-size: 14px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.file-breadcrumb {
+  padding: 6px 8px;
+  border-bottom: 1px solid #808080;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.file-breadcrumb-segment {
+  cursor: pointer;
+  text-decoration: underline;
+}
+.file-breadcrumb-segment:hover {
+  color: var(--color-highlight);
+}
+
+.file-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 1px;
+  user-select: none;
+  font-size: 14px;
+}
+.file-list-item:hover {
+  background: #e0e0e0;
+}
+.file-list-item.selected {
+  background: var(--color-highlight);
+  color: var(--color-highlight-text);
+}
+.file-list-icon {
+  font-size: 16px;
+  font-family: system-ui, sans-serif;
+  width: 20px;
+  text-align: center;
+}
+.file-list-name {
+  flex: 1;
+}
+
+/* ----- Text Editor ----- */
+.text-editor {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.text-editor-content {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--font-terminal);
+  font-size: 16px;
+  padding: 8px;
+  background: #fff;
+  color: #000;
+  line-height: 1.4;
+}
+
+/* ----- About Dialog ----- */
+.about-dialog {
+  padding: 20px;
+  text-align: center;
+  font-family: var(--font-system);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.about-logo {
+  font-family: var(--font-terminal);
+  font-size: 18px;
+  white-space: pre;
+  line-height: 1.1;
+  color: #333;
+}
+.about-title {
+  font-size: 16px;
+  font-family: var(--font-pixel);
+  font-weight: bold;
+}
+.about-info {
+  color: #666;
+  line-height: 1.8;
+}
+.about-ok-btn {
+  padding: 6px 28px;
+  border: 2px outset #c0c0c0;
+  background: #c0c0c0;
+  font-family: var(--font-system);
+  font-size: 14px;
+  cursor: pointer;
+}
+.about-ok-btn:active {
+  border-style: inset;
+}
+
+/* ----- Settings ----- */
+.settings-panel {
+  padding: 12px;
+  font-family: var(--font-system);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-group {
+  border: 1px solid #808080;
+  padding: 8px;
+}
+.settings-group-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+}
+.settings-toggle {
+  width: 36px;
+  height: 18px;
+  background: #808080;
+  border-radius: 9px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+.settings-toggle.on {
+  background: var(--color-highlight);
+}
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.15s;
+}
+.settings-toggle.on::after {
+  left: 20px;
+}
+
+.settings-color-picker {
+  display: flex;
+  gap: 6px;
+}
+.settings-color-swatch {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #808080;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.settings-color-swatch.active {
+  border-color: var(--color-highlight);
+  box-shadow: 0 0 0 1px var(--color-highlight);
+}
+
+/* ----- Snake Game ----- */
+.snake-game {
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-terminal);
+}
+.snake-score {
+  color: var(--color-green);
+  font-size: 18px;
+  padding: 4px 8px;
+  text-shadow: 0 0 6px var(--color-green);
+}
+.snake-canvas {
+  border: 1px solid #333;
+  image-rendering: pixelated;
+}
+.snake-game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-green);
+  text-align: center;
+  text-shadow: 0 0 8px var(--color-green);
+}
+.snake-game-over h3 {
+  font-family: var(--font-terminal);
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.snake-replay-btn {
+  padding: 4px 16px;
+  border: 1px solid var(--color-green);
+  background: transparent;
+  color: var(--color-green);
+  font-family: var(--font-terminal);
+  font-size: 18px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.snake-replay-btn:hover {
+  background: var(--color-green);
+  color: #000;
+}
+
+/* ----- System Error Dialog ----- */
+.system-error-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.system-error-dialog {
+  background: #fff;
+  border: 3px solid #000;
+  padding: 20px 24px;
+  max-width: 420px;
+  text-align: center;
+  font-family: var(--font-system);
+  font-size: 14px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+}
+.system-error-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  font-family: system-ui, sans-serif;
+}
+.system-error-message {
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+.system-error-code {
+  color: #808080;
+  font-size: 9px;
+  margin-bottom: 16px;
+}
+.system-error-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.system-error-btn {
+  padding: 6px 22px;
+  border: 2px outset #c0c0c0;
+  background: #c0c0c0;
+  font-family: var(--font-system);
+  font-size: 14px;
+  cursor: pointer;
+}
+.system-error-btn:active {
+  border-style: inset;
+}
+
+/* ----- Screen Saver ----- */
+.screensaver {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #000;
+  z-index: 3000;
+  cursor: none;
+}
+.screensaver canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ----- Shutdown Screen ----- */
+.shutdown-screen {
+  width: 100%;
+  height: 100dvh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  font-family: var(--font-system);
+  font-size: clamp(14px, 2vw, 18px);
+  text-align: center;
+  cursor: pointer;
+}
+
+.shutdown-confirm-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+.shutdown-confirm-dialog {
+  background: #fff;
+  border: 2px solid #000;
+  padding: 20px 24px;
+  text-align: center;
+  font-family: var(--font-system);
+  font-size: 14px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+}
+.shutdown-confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* ----- Matrix Easter Egg ----- */
+.matrix-rain {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.matrix-column {
+  position: absolute;
+  top: -100%;
+  font-family: var(--font-terminal);
+  font-size: 16px;
+  color: var(--color-green);
+  text-shadow: 0 0 8px var(--color-green);
+  white-space: pre;
+  animation: matrix-fall linear forwards;
+  line-height: 1.2;
+}
+@keyframes matrix-fall {
+  to { top: 100%; }
+}
+
+/* ----- Loading Cursor ----- */
+body.cursor-loading,
+body.cursor-loading * {
+  cursor: wait !important;
+}
+
+/* ----- Mobile Responsive ----- */
+@media (max-width: 768px) {
+  .desktop-icons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    right: auto;
+    top: auto;
+    gap: 12px;
+    padding: 16px 8px;
+  }
+  .desktop-icon {
+    width: 64px;
+    min-height: 64px;
+    justify-content: center;
+  }
+  .desktop-icon-emoji {
+    font-size: 28px;
+  }
+
+  .menu-bar {
+    font-size: 13px;
+    height: 28px;
+  }
+  .menu-item {
+    padding: 0 8px;
+  }
+
+  .desktop-area {
+    top: 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .window-chrome {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    border: none;
+    box-shadow: none;
+    flex: 1;
+  }
+
+  .terminal-mobile-input {
+    display: flex;
+    padding: 4px;
+    border-top: 1px solid #333;
+    background: #111;
+  }
+  .terminal-mobile-input input {
+    flex: 1;
+    background: #0a0a0a;
+    color: var(--color-green);
+    border: 1px solid #333;
+    padding: 6px 8px;
+    font-family: var(--font-terminal);
+    font-size: 16px;
+    outline: none;
+  }
+}
