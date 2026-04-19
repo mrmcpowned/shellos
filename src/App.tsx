@@ -79,7 +79,10 @@ function ShellOSApp() {
   const activeWindow = state.windows.find((w) => w.id === state.activeWindowId);
   const activeAppTitle = activeWindow ? activeWindow.title : null;
 
-  const desktopPattern = settings.desktopPattern === 'crosshatch' ? undefined : settings.desktopPattern;
+  // When CRT is enabled, force solid background to avoid moiré from crosshatch + scanlines
+  const desktopPattern = settings.crtEnabled
+    ? 'solid'
+    : settings.desktopPattern === 'crosshatch' ? undefined : settings.desktopPattern;
 
   const renderAppContent = (win: typeof state.windows[0]) => {
     const isActive = win.id === state.activeWindowId;

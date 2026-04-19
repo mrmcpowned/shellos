@@ -16,6 +16,7 @@
     "@react-three/fiber": "^9.6.0",
     "@react-three/postprocessing": "^3.0.4",
     "@types/three": "^0.184.0",
+    "@zumer/snapdom": "^2.8.0",
     "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "postprocessing": "^6.39.1",
