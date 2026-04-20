@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Page Cannot Be Displayed</title>
+  <style>
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      background: #fff;
+      color: #000;
+      margin: 0;
+      padding: 20px 30px;
+    }
+    h1 {
+      font-size: 16px;
+      color: #000;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 8px;
+    }
+    .icon {
+      float: left;
+      font-size: 36px;
+      margin-right: 16px;
+      margin-top: -4px;
+    }
+    p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #333;
+    }
+    ul {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .url {
+      font-weight: bold;
+      word-break: break-all;
+    }
+    .suggestions {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+    .suggestions h3 {
+      font-size: 13px;
+      margin: 0 0 8px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 16px 0;
+    }
+    .footer {
+      font-size: 11px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">⚠️</div>
+  <h1>The page cannot be displayed</h1>
+
+  <p>The page you are looking for is currently unavailable. The Web site might be experiencing technical difficulties, or you may need to adjust your browser settings.</p>
+
+  <p class="url">{{URL}}</p>
+
+  <div class="suggestions">
+    <h3>Please try the following:</h3>
+    <ul>
+      <li>Click the <b>Refresh</b> button, or try again later.</li>
+      <li>If you typed the page address in the Location bar, make sure that it is spelled correctly.</li>
+      <li>To check your connection settings, open ShellOS Settings.</li>
+      <li>Some sites may require a 128-bit connection security. Check your Security settings.</li>
+      <li>If you are behind a firewall or proxy, make sure that ShellOS Browser is permitted to access the Web.</li>
+    </ul>
+  </div>
+
+  <hr>
+  <p class="footer">ShellOS Browser &mdash; Cannot find server or DNS Error</p>
+</body>
+</html>

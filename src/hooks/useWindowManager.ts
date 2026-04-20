@@ -10,6 +10,7 @@ const DEFAULT_SIZES: Record<AppType, { width: number; height: number }> = {
   about: { width: 340, height: 300 },
   settings: { width: 380, height: 420 },
   snake: { width: 420, height: 460 },
+  browser: { width: 700, height: 500 },
 };
 
 const SINGLETONS: AppType[] = ['about', 'settings'];
@@ -125,6 +126,14 @@ function reducer(state: DesktopState, action: DesktopAction): DesktopState {
         ),
       };
 
+    case 'SET_WINDOW_TITLE':
+      return {
+        ...state,
+        windows: state.windows.map((w) =>
+          w.id === action.id ? { ...w, title: action.title } : w
+        ),
+      };
+
     case 'SHUTDOWN':
       return { ...state, phase: 'shutdown' };
 
@@ -175,6 +184,10 @@ export function useWindowManager() {
   );
   const minimizeWindow = useCallback((id: string) => dispatch({ type: 'MINIMIZE_WINDOW', id }), []);
   const maximizeWindow = useCallback((id: string) => dispatch({ type: 'MAXIMIZE_WINDOW', id }), []);
+  const setWindowTitle = useCallback(
+    (id: string, title: string) => dispatch({ type: 'SET_WINDOW_TITLE', id, title }),
+    []
+  );
   const powerOn = useCallback(() => dispatch({ type: 'POWER_ON' }), []);
   const bootComplete = useCallback(() => dispatch({ type: 'BOOT_COMPLETE' }), []);
   const shutdown = useCallback(() => dispatch({ type: 'SHUTDOWN' }), []);
@@ -198,6 +211,7 @@ export function useWindowManager() {
     resizeWindow,
     minimizeWindow,
     maximizeWindow,
+    setWindowTitle,
     powerOn,
     bootComplete,
     shutdown,

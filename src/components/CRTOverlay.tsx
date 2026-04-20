@@ -294,7 +294,12 @@ export default function CRTOverlay({ children, phase, hasAnimatedContent }: CRTO
       cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
       cursorRef.current.style.display = 'block';
 
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      // Find element under mouse — check shadow roots too
+      let el = document.elementFromPoint(e.clientX, e.clientY);
+      if (el?.shadowRoot) {
+        const shadowEl = el.shadowRoot.elementFromPoint(e.clientX, e.clientY);
+        if (shadowEl) el = shadowEl;
+      }
       cursorRef.current.dataset.cursor = detectCursor(el);
     }
   }, [detectCursor]);

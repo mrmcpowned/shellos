@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ShellSearch Results</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: #fff;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    a { color: #0000cc; }
+    a:visited { color: #551a8b; }
+    .header {
+      background: #c0c0c0;
+      padding: 8px 12px;
+      border-bottom: 1px solid #808080;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 18px;
+      margin: 0;
+      color: #000080;
+    }
+    .header form {
+      display: flex;
+      gap: 4px;
+    }
+    .header input[type="text"] {
+      font-size: 13px;
+      padding: 2px 4px;
+      width: 250px;
+      border: 2px inset #ccc;
+    }
+    .header input[type="submit"] {
+      font-size: 12px;
+      padding: 2px 8px;
+    }
+    .results {
+      padding: 12px 20px;
+      max-width: 600px;
+    }
+    .results-info {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .result {
+      margin-bottom: 16px;
+    }
+    .result a {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .result .url {
+      font-size: 11px;
+      color: #008000;
+    }
+    .result .desc {
+      font-size: 12px;
+      color: #333;
+      margin-top: 2px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      padding: 16px;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🐚 ShellSearch</h1>
+    <form action="/results.html" method="get">
+      <input type="text" name="q" placeholder="Search...">
+      <input type="submit" value="Search">
+    </form>
+  </div>
+
+  <div class="results">
+    <div class="results-info">Results 1-10 of about 4,827 matches</div>
+
+    <div class="result">
+      <a href="/directory.html">The Official Conch Shell Homepage</a>
+      <div class="url">http://www.conchshell.org/</div>
+      <div class="desc">Everything you ever wanted to know about conch shells. Includes species guide, habitat information, and fun facts about these amazing creatures.</div>
+    </div>
+
+    <div class="result">
+      <a href="/directory.html">Bob's Conch Shell Collection</a>
+      <div class="url">http://www.geoconchies.com/~bob/shells/</div>
+      <div class="desc">My personal collection of over 200 conch shells from around the world. Pictures and descriptions. Sign my guestbook!</div>
+    </div>
+
+    <div class="result">
+      <a href="/directory.html">ShellOS - The Operating System of Tomorrow</a>
+      <div class="url">http://www.shellos.org/</div>
+      <div class="desc">ShellOS v1.0 - A revolutionary operating system by Conch Computing Inc. Download now! 640K RAM required.</div>
+    </div>
+
+    <div class="result">
+      <a href="/directory.html">Conch Computing Inc. - Corporate Site</a>
+      <div class="url">http://www.conchcomputing.com/</div>
+      <div class="desc">Conch Computing Inc. is the leader in shell-based computing solutions. Founded 1984. "The shell that never closes."</div>
+    </div>
+
+    <div class="result">
+      <a href="/directory.html">FREE Conch Shell Screensavers!!!</a>
+      <div class="url">http://www.screensavers4free.com/conch/</div>
+      <div class="desc">★★★ Download FREE conch shell screensavers for Windows 95/NT! ★★★ Over 50 animated designs! No spyware!</div>
+    </div>
+
+    <div class="result">
+      <a href="/">Back to ShellSearch Home</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    Copyright &copy; 1995-1997 ShellSearch Inc.
+  </div>
+</body>
+</html>

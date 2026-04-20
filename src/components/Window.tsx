@@ -67,7 +67,7 @@ export default function Window({
       // Check body first, then known scrollable children
       let target: HTMLElement = el;
       if (el.scrollHeight <= el.clientHeight + 1) {
-        const child = el.querySelector('.terminal, .file-explorer, .settings-panel, .text-editor-content') as HTMLElement | null;
+        const child = el.querySelector('.terminal, .file-explorer, .settings-panel, .text-editor-content, .browser-content') as HTMLElement | null;
         if (child && child.scrollHeight > child.clientHeight + 1) {
           target = child;
         }

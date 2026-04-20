@@ -1,4 +1,4 @@
-export type AppType = 'terminal' | 'fileExplorer' | 'textEditor' | 'about' | 'settings' | 'snake';
+export type AppType = 'terminal' | 'fileExplorer' | 'textEditor' | 'about' | 'settings' | 'snake' | 'browser';
 
 export interface WindowState {
   id: string;
@@ -40,6 +40,7 @@ export type DesktopAction =
   | { type: 'RESIZE_WINDOW'; id: string; width: number; height: number }
   | { type: 'MINIMIZE_WINDOW'; id: string }
   | { type: 'MAXIMIZE_WINDOW'; id: string }
+  | { type: 'SET_WINDOW_TITLE'; id: string; title: string }
   | { type: 'SHUTDOWN' }
   | { type: 'CANCEL_SHUTDOWN' }
   | { type: 'SCREENSAVER_ON' }

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ShellSearch - The Web's Shell</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: #fff;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    a { color: #0000cc; }
+    a:visited { color: #551a8b; }
+    hr { color: #808080; }
+    .header {
+      text-align: center;
+      padding: 20px 10px 10px;
+    }
+    .header h1 {
+      font-size: 32px;
+      margin: 0;
+      color: #000080;
+      letter-spacing: 2px;
+    }
+    .header .tagline {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .search-box {
+      text-align: center;
+      padding: 16px;
+    }
+    .search-box input[type="text"] {
+      font-size: 14px;
+      padding: 4px;
+      width: 300px;
+      border: 2px inset #ccc;
+    }
+    .search-box input[type="submit"] {
+      font-size: 13px;
+      padding: 3px 12px;
+      margin-left: 4px;
+    }
+    .links-section {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 8px 20px;
+    }
+    .links-section h3 {
+      font-size: 14px;
+      color: #000080;
+      margin: 12px 0 4px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
+    }
+    .links-section ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+    .links-section li {
+      font-size: 13px;
+      margin: 3px 0;
+    }
+    .links-section li small {
+      color: #666;
+    }
+    .banner {
+      text-align: center;
+      padding: 8px;
+      font-size: 11px;
+      color: #888;
+    }
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      padding: 16px;
+      border-top: 1px solid #ccc;
+      margin-top: 16px;
+    }
+    .counter {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #0f0;
+      padding: 2px 6px;
+      font-size: 11px;
+    }
+    .marquee-bar {
+      background: #ffffcc;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-bottom: 1px solid #ccc;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .marquee-bar span {
+      display: inline-block;
+      animation: marquee 15s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .new-gif {
+      color: red;
+      font-weight: bold;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="marquee-bar">
+    <span>★ Welcome to ShellSearch! Your gateway to the information superhighway! ★ Over 10,000 pages indexed! ★ Now with enhanced search technology! ★</span>
+  </div>
+
+  <div class="header">
+    <h1>🐚 ShellSearch</h1>
+    <div class="tagline">The Web's #1 Shell-Powered Search Engine &mdash; Since 1995</div>
+  </div>
+
+  <form class="search-box" action="/results.html" method="get">
+    <input type="text" name="q" placeholder="Search the web...">
+    <input type="submit" value="Search!">
+  </form>
+
+  <div class="links-section">
+    <h3>📂 Web Directory</h3>
+    <ul>
+      <li><a href="/directory.html">Arts &amp; Humanities</a></li>
+      <li><a href="/directory.html">Computers &amp; Internet</a> <span class="new-gif">NEW!</span></li>
+      <li><a href="/directory.html">Entertainment</a></li>
+      <li><a href="/directory.html">Science</a></li>
+      <li><a href="/directory.html">Recreation &amp; Sports</a></li>
+    </ul>
+
+    <h3>🔥 What's Hot</h3>
+    <ul>
+      <li><a href="/directory.html">Top 100 Websites of 1997</a></li>
+      <li><a href="/directory.html">Cool Site of the Day</a> <span class="new-gif">NEW!</span></li>
+      <li><a href="/directory.html">Free Email Services</a></li>
+      <li><a href="/directory.html">Build Your Own Homepage!</a></li>
+    </ul>
+
+    <h3>🛠️ ShellSearch Services</h3>
+    <ul>
+      <li><a href="/directory.html">ShellSearch Mail</a> &mdash; <small>Free web-based email!</small></li>
+      <li><a href="/directory.html">ShellSearch Chat</a> &mdash; <small>Talk to friends online!</small></li>
+      <li><a href="/directory.html">ShellSearch Maps</a> &mdash; <small>Find directions anywhere!</small></li>
+    </ul>
+  </div>
+
+  <div class="banner">
+    [ <a href="/directory.html">Add Your Site</a> | <a href="/directory.html">Advertise</a> | <a href="/about.html">About ShellSearch</a> | <a href="/directory.html">Help</a> ]
+  </div>
+
+  <div class="footer">
+    <p>Visitor #<span class="counter">004,827,391</span></p>
+    <p>Copyright &copy; 1995-1997 ShellSearch Inc. All rights reserved.</p>
+    <p>Best viewed in ShellOS Browser at 640x480</p>
+    <p>
+      <img alt="[Netscape Now!]" width="12" height="12" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+      This site is <b>Netscape Enhanced</b>™
+    </p>
+  </div>
+</body>
+</html>

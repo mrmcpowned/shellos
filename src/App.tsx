@@ -20,6 +20,7 @@ import TextEditor from './apps/TextEditor';
 import AboutShellOS from './apps/AboutShellOS';
 import Settings from './apps/Settings';
 import Snake from './apps/Snake';
+import Browser from './apps/Browser';
 import type { AppType } from './types';
 
 const ICON_CONFIG: { appType: AppType; icon: string; label: string; title: string }[] = [
@@ -27,12 +28,13 @@ const ICON_CONFIG: { appType: AppType; icon: string; label: string; title: strin
   { appType: 'fileExplorer', icon: '📁', label: 'Files', title: 'File Explorer' },
   { appType: 'textEditor', icon: '📝', label: 'Editor', title: 'Text Editor' },
   { appType: 'snake', icon: '🐍', label: 'Snake', title: 'Snake' },
+  { appType: 'browser', icon: '🌐', label: 'Browser', title: 'ShellOS Browser' },
 ];
 
 function ShellOSApp() {
   const { settings } = useShellOS();
   const {
-    state, openWindow, closeWindow, focusWindow, moveWindow, resizeWindow,
+    state, openWindow, closeWindow, focusWindow, moveWindow, resizeWindow, setWindowTitle,
     powerOn, bootComplete, shutdown, cancelShutdown, screensaverOn, screensaverOff, showError, dismissError, deactivateAll, restart,
   } = useWindowManager();
   const { playWindowOpen, playWindowClose } = useUISounds();
@@ -79,7 +81,16 @@ function ShellOSApp() {
   );
 
   const activeWindow = state.windows.find((w) => w.id === state.activeWindowId);
-  const activeAppTitle = activeWindow ? activeWindow.title : null;
+  const APP_NAMES: Partial<Record<AppType, string>> = {
+    terminal: 'Terminal',
+    fileExplorer: 'File Explorer',
+    textEditor: 'Text Editor',
+    snake: 'Snake',
+    browser: 'ShellOS Browser',
+    about: 'About ShellOS',
+    settings: 'Settings',
+  };
+  const activeAppTitle = activeWindow ? (APP_NAMES[activeWindow.appType] || activeWindow.title) : null;
 
   // When CRT is enabled, force solid background to avoid moiré from crosshatch + scanlines
   const desktopPattern = settings.crtEnabled
@@ -113,6 +124,8 @@ function ShellOSApp() {
         return <Settings onTryScreensaver={screensaverOn} />;
       case 'snake':
         return <Snake isActive={isActive} />;
+      case 'browser':
+        return <Browser onTitleChange={(title) => setWindowTitle(win.id, title)} />;
       default:
         return null;
     }
