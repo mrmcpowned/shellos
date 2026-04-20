@@ -223,7 +223,7 @@ export default function Terminal({ isActive, onOpenFile, onShutdown, onCrash }: 
         <span className="terminal-prompt">{cwd}&gt;&nbsp;</span>
         <span className="terminal-input">
           {input}
-          <span ref={cursorRef} className="terminal-cursor" />
+          <span ref={cursorRef} className="terminal-cursor" data-crt-ignore />
         </span>
       </div>
       <form className="terminal-mobile-input" onSubmit={handleMobileSubmit}>

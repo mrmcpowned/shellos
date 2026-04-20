@@ -90,8 +90,19 @@ export default function Window({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     // Watch for content changes (new terminal output, etc.)
-    const mo = new MutationObserver(() => requestAnimationFrame(update));
-    mo.observe(el, { childList: true, subtree: true, characterData: true });
+    // Debounced: coalesce rapid mutations into a single rAF callback
+    let moRafPending = false;
+    const mo = new MutationObserver(() => {
+      if (!moRafPending) {
+        moRafPending = true;
+        requestAnimationFrame(() => {
+          moRafPending = false;
+          update();
+        });
+      }
+    });
+    // childList only — characterData changes don't affect scrollHeight
+    mo.observe(el, { childList: true, subtree: true });
     update();
 
     cleanupRef.current = () => {

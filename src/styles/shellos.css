@@ -1267,3 +1267,34 @@ body.cursor-loading * {
     outline: none;
   }
 }
+
+/* ----- CRT Capture Optimization -----
+   Strip expensive CSS that snapdom must rasterize.
+   The CRT shader provides bloom/glow, so per-element text-shadow is redundant.
+   The DOM layer is invisible (behind WebGL canvas), so this has zero visual impact. */
+[data-crt] .terminal,
+[data-crt] .terminal[data-color="white"] {
+  text-shadow: none;
+}
+[data-crt] .boot-line {
+  text-shadow: none;
+}
+[data-crt] .desktop-icon-label {
+  text-shadow: none;
+}
+[data-crt] .window-chrome {
+  box-shadow: none;
+}
+[data-crt] .settings-toggle::after {
+  transition: none;
+}
+[data-crt] .poweron-icon {
+  transition: none;
+  text-shadow: none;
+}
+[data-crt] .poweron-text {
+  transition: none;
+}
+[data-crt] .menu-bar-title {
+  text-shadow: none;
+}
