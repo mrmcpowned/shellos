@@ -48,7 +48,7 @@ export default function Window({
 
   const { settings } = useShellOS();
   const crtOn = settings.crtEnabled;
-  const [scrollState, setScrollState] = useState({ visible: false, thumbTop: 0, thumbHeight: 30 });
+  const [scrollState, setScrollState] = useState({ visible: false, thumbTop: 0, thumbHeight: 30, trackTop: 26 });
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const bodyRef = useCallback((el: HTMLDivElement | null) => {
@@ -59,7 +59,7 @@ export default function Window({
     }
 
     if (!el || !crtOn) {
-      setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30 });
+      setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30, trackTop: 26 });
       return;
     }
 
@@ -67,23 +67,37 @@ export default function Window({
       // Check body first, then known scrollable children
       let target: HTMLElement = el;
       if (el.scrollHeight <= el.clientHeight + 1) {
-        const child = el.querySelector('.terminal, .file-explorer, .settings-panel, .text-editor-content, .browser-content') as HTMLElement | null;
-        if (child && child.scrollHeight > child.clientHeight + 1) {
-          target = child;
+        const candidates = el.querySelectorAll<HTMLElement>('.terminal, .file-explorer, .settings-panel, .text-editor-content, .browser-content, .browser-shadow-host');
+        for (const child of candidates) {
+          if (child.scrollHeight > child.clientHeight + 1) {
+            target = child;
+            break;
+          }
         }
       }
 
       const { scrollTop, scrollHeight, clientHeight } = target;
       const visible = scrollHeight > clientHeight + 1;
       if (!visible) {
-        setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30 });
+        setScrollState({ visible: false, thumbTop: 0, thumbHeight: 30, trackTop: 26 });
         return;
       }
       const thumbHeight = Math.max(24, (clientHeight / scrollHeight) * clientHeight);
       const scrollRange = scrollHeight - clientHeight;
       const thumbRange = clientHeight - thumbHeight;
       const thumbTop = scrollRange > 0 ? (scrollTop / scrollRange) * thumbRange : 0;
-      setScrollState({ visible: true, thumbTop, thumbHeight });
+
+      // Compute scrollbar track top: align with the scrollable target, not the title bar.
+      // 26px = title bar height. If the scrollable element is deeper (e.g. browser content
+      // area below a toolbar), offset the track accordingly.
+      let trackTop = 26;
+      const windowChrome = el.closest('.window-chrome');
+      if (windowChrome && target !== el) {
+        const chromeRect = windowChrome.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        trackTop = Math.round(targetRect.top - chromeRect.top);
+      }
+      setScrollState({ visible: true, thumbTop, thumbHeight, trackTop });
     };
 
     el.addEventListener('scroll', update, { passive: true, capture: true });
@@ -92,7 +106,22 @@ export default function Window({
     // Watch for content changes (new terminal output, etc.)
     // Debounced: coalesce rapid mutations into a single rAF callback
     let moRafPending = false;
+    // Lazily watch .browser-shadow-host for data-content-version changes
+    // (shadow DOM content is invisible to MutationObserver)
+    let shadowHostObserved: Element | null = null;
+    let childMo: MutationObserver | null = null;
+    function ensureShadowHostObserver() {
+      if (!el) return;
+      const sh = el.querySelector('.browser-shadow-host');
+      if (sh && sh !== shadowHostObserved) {
+        shadowHostObserved = sh;
+        childMo?.disconnect();
+        childMo = new MutationObserver(update);
+        childMo.observe(sh, { attributes: true, attributeFilter: ['data-content-version'] });
+      }
+    }
     const mo = new MutationObserver(() => {
+      ensureShadowHostObserver();
       if (!moRafPending) {
         moRafPending = true;
         requestAnimationFrame(() => {
@@ -109,6 +138,7 @@ export default function Window({
       el.removeEventListener('scroll', update, { capture: true });
       ro.disconnect();
       mo.disconnect();
+      childMo?.disconnect();
     };
   }, [crtOn]);
 
@@ -151,7 +181,7 @@ export default function Window({
   );
 
   const scrollbar = crtOn && scrollState.visible ? (
-    <div className="window-scrollbar">
+    <div className="window-scrollbar" style={{ top: scrollState.trackTop }}>
       <div className="window-scrollbar-track">
         <div
           className="window-scrollbar-thumb"
@@ -186,6 +216,7 @@ export default function Window({
         position: 'absolute',
       }}
       className="window-chrome"
+      data-window-id={windowState.id}
       enableResizing={{
         bottom: true,
         right: true,

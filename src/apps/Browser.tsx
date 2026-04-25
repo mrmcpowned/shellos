@@ -268,6 +268,9 @@ export default function Browser({ onTitleChange }: BrowserProps) {
     shadow.innerHTML = cursorStyle + styles + body;
     if (title && onTitleChangeRef.current) onTitleChangeRef.current('ShellOS Browser - ' + title);
 
+    // Signal to Window.tsx that shadow content changed (MutationObserver can't see into shadow DOM)
+    shadowHostRef.current.dataset.contentVersion = String(Date.now());
+
     // Intercept link clicks — use composedPath to get real target in shadow DOM
     const clickHandler = (e: Event) => {
       const path = e.composedPath();
